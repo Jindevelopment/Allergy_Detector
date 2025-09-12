@@ -188,7 +188,7 @@ def detect_allergies(text, user_allergies):
 
 # 메인 페이지
 def main_page():
-    st.markdown('<h1 class="main-header">🚨 Dangerout Eating</h1>', unsafe_allow_html=True)
+    st.markdown('<h1 class="main-header">🚨 Dangerous Eating</h1>', unsafe_allow_html=True)
     st.markdown('<p style="text-align: center; font-size: 1.2rem; color: #6b7280;">사진 한 장으로 알레르기 위험 확인</p>', unsafe_allow_html=True)
     
     # 핵심 기능 소개
@@ -604,4 +604,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
