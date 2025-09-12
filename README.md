@@ -1,7 +1,7 @@
 # Dangerous_Eating
 Cursor AI 활용 경진대회
 
-# 🚨 Dangerout Eating - 알레르기 위험 탐지 웹사이트
+# 🚨 Dangerous Eating - 알레르기 위험 탐지 웹사이트
 
 AI 기반 성분표 알레르기 위험 탐지 및 맞춤형 경고 웹사이트입니다.
 
