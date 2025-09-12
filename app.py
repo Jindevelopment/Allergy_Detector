@@ -10,7 +10,7 @@ import re
 
 # 페이지 설정
 st.set_page_config(
-    page_title="Dangerout Eating - 알레르기 위험 탐지",
+    page_title="Dangerous Eating - 알레르기 위험 탐지",
     page_icon="🚨",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -604,3 +604,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
