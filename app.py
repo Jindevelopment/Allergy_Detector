@@ -257,53 +257,50 @@ def main_page():
 def analysis_page():
     st.markdown('<div class="sub-header">🔍 성분표 분석</div>', unsafe_allow_html=True)
     
-    # 이미지 업로드
-    uploaded_file = st.file_uploader(
-        "성분표 이미지를 업로드하세요",
-        type=['png', 'jpg', 'jpeg'],
-        help="식품 성분표가 명확하게 보이는 이미지를 업로드해주세요."
-    )
+    # 업로드/촬영 선택
+    tab1, tab2 = st.tabs(["이미지 업로드", "카메라 촬영"])
     
-    if uploaded_file is not None:
-        # 이미지 표시
-        image = Image.open(uploaded_file)
+    with tab1:
+        uploaded_file = st.file_uploader(
+            "성분표 이미지를 업로드하세요",
+            type=['png', 'jpg', 'jpeg'],
+            help="식품 성분표가 명확하게 보이는 이미지를 업로드해주세요."
+        )
+        image = None
+        if uploaded_file is not None:
+            image = Image.open(uploaded_file)
+    
+    with tab2:
+        camera_image = st.camera_input("카메라로 촬영하기")
+        image = None
+        if camera_image is not None:
+            image = Image.open(camera_image)
+    
+    # 이미지가 준비되면 아래 로직 실행
+    if 'image' in locals() and image is not None:
         col1, col2 = st.columns([1, 1])
-        
         with col1:
-            st.image(image, caption="업로드된 성분표", use_column_width=True)
-        
+            st.image(image, caption="성분표 이미지", use_column_width=True)
         with col2:
-            # OCR 처리
             if st.button("🔍 성분 분석 시작", type="primary"):
                 with st.spinner("이미지를 분석 중입니다..."):
-                    # OCR 텍스트 추출
                     ocr_text = pytesseract.image_to_string(image, lang='kor+eng')
-                    
-                    # 알레르기 탐지
                     detected_allergens = detect_allergens(ocr_text)
                     risk_level = calculate_risk_level(detected_allergens)
-                    
-                    # 결과 표시
                     st.success("분석이 완료되었습니다!")
-                    
-                    # OCR 결과
                     st.subheader("📝 인식된 텍스트")
                     st.text_area("", value=ocr_text, height=150, disabled=True)
-                    
-                    # 위험도 표시
                     st.subheader("🚦 위험도 분석")
                     display_risk_level(risk_level)
-                    
-                    # 탐지된 알레르겐
                     if detected_allergens:
                         st.subheader("⚠️ 탐지된 알레르겐")
                         for allergen in detected_allergens:
                             st.warning(f"• {allergen}")
                     else:
                         st.success("✅ 등록된 알레르겐이 탐지되지 않았습니다.")
-                    
-                    # 분석 결과 저장
-                    save_analysis_result(uploaded_file.name, ocr_text, detected_allergens, risk_level)
+                    # 업로드 파일명 또는 camera_input은 파일명이 없으므로 구분
+                    image_name = uploaded_file.name if 'uploaded_file' in locals() and uploaded_file else "촬영이미지"
+                    save_analysis_result(image_name, ocr_text, detected_allergens, risk_level)
 
 # 알레르기 탐지 함수
 def detect_allergens(text):
