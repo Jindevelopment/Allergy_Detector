@@ -9,12 +9,15 @@ AI 기반 성분표 알레르기 위험 탐지 및 맞춤형 경고 웹사이트
 ## ✨ 주요 기능
 
 ### 🔍 OCR 기반 성분표 인식
-- pytesseract 등 OCR 라이브러리를 활용하여 이미지에서 텍스트를 자동 추출
+- **EasyOCR + Tesseract** 이중 엔진으로 한국어 OCR 성능 향상
+- **맥북 GPU(MPS) 가속** 지원으로 빠른 처리
+- 고급 이미지 전처리 파이프라인 (CLAHE, Bilateral Filter, 모폴로지 연산)
 - 영문 및 한글 성분 모두 인식 지원
 
 ### 👤 사용자 프로필 매칭
 - 사용자가 사전에 등록한 알레르기 정보와 성분표에서 인식한 텍스트를 교차 분석
 - 다국어 및 동의어 매칭 (예: "난류 = 계란", "soy = 대두")
+- **알레르기 성분 중복 제거** 기능으로 깔끔한 결과 출력
 
 ### 🚦 위험 신호등 경고
 - 위험도 수준을 색상으로 직관적으로 표시
@@ -37,9 +40,10 @@ AI 기반 성분표 알레르기 위험 탐지 및 맞춤형 경고 웹사이트
 
 ## 🛠️ 기술 스택
 
-- **백엔드/분석**: Python, pytesseract (OCR), Pandas (데이터 처리)
+- **백엔드/분석**: Python, EasyOCR, pytesseract (OCR), OpenCV (이미지 처리)
 - **프론트엔드/대시보드**: Streamlit
-- **데이터베이스**: SQLite
+- **데이터베이스**: SQLite + Firestore (하이브리드)
+- **GPU 가속**: PyTorch MPS (맥북 M1/M2/M3)
 - **AI 보조**: Cursor AI (위험 근거 문구 생성 등)
 
 ## 📦 설치 및 실행
@@ -61,14 +65,21 @@ source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-### 4. Tesseract OCR 설치
-- **Windows**: [Tesseract 설치 파일](https://github.com/UB-Mannheim/tesseract/wiki) 다운로드 및 설치
-- **macOS**: `brew install tesseract tesseract-lang`
-- **Ubuntu**: `sudo apt-get install tesseract-ocr tesseract-ocr-kor tesseract-ocr-eng`
+### 4. OCR 엔진 설치
+- **Tesseract OCR**:
+  - **Windows**: [Tesseract 설치 파일](https://github.com/UB-Mannheim/tesseract/wiki) 다운로드 및 설치
+  - **macOS**: `brew install tesseract tesseract-lang`
+  - **Ubuntu**: `sudo apt-get install tesseract-ocr tesseract-ocr-kor tesseract-ocr-eng`
+- **EasyOCR**: pip로 자동 설치됨
 
 ### 5. 애플리케이션 실행
 ```bash
 streamlit run app.py
+```
+
+### 6. 터미널에서 OCR 테스트
+```bash
+python ocr_test.py [이미지파일경로]
 ```
 
 ## 📱 사용 방법
@@ -94,6 +105,26 @@ streamlit run app.py
 ### 동의어 지원
 각 알레르기 성분에 대해 다양한 동의어와 영문명을 지원합니다.
 예: "대두" → "soy", "soybean", "tofu", "대두단백", "게맛살"
+
+## 🔑 Firestore 컬렉션 구조 (선택적)
+
+### 1. `알레르겐_목록`
+- `표시명` (string) : 알레르겐 명칭 (예: 밀, 땅콩, 계란)
+- `이름` (string) : 동일 (검색용)
+- `분류` (string) : 알레르겐 분류 (곡류, 견과류 등)
+- `동의어` (list[string]) : 다른 표기 (예: 밀가루, 소맥)
+- `증상` (string) : 주된 증상 계통
+- `보수적점수` (int) : 기본 점수
+- `주요알레르겐` (bool) : 표시 대상 여부
+
+### 2. `사용자_보고`
+- `id` : `${uid}_${timestamp}_${음식명}`
+- `사용자UID` : UID
+- `음식명` : 스캔한 음식 이름
+- `알레르겐_탐지` : 탐지된 알레르겐 리스트
+- `증상_체크` : 체크된 증상 계통
+- `총점` : 계산된 점수
+- `최종위험도` : 최종 판정 단계
 
 ## 🎨 디자인 특징
 

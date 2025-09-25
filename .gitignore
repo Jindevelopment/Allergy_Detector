@@ -1,2 +1,23 @@
+# Firebase 키 & 로컬 가상환경 무시
+serviceAccountKey.json
+cursorAI/
+db_setup/cursorAI/
+Allergy_Detector/.streamlit/
+
+# Python 캐시 및 DB
 __pycache__/
+*.pyc
 allergy_detector.db
+
+# 가상환경
+venv/
+env/
+.env
+
+# IDE 설정
+.vscode/
+.idea/
+
+# OS 파일
+.DS_Store
+Thumbs.db

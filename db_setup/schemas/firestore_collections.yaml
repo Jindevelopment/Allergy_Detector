@@ -1,0 +1,42 @@
+collections:
+  - name: 알레르겐_목록
+    doc_example:
+      id: "peanut"
+      displayName: "땅콩"
+      synonyms: ["피넛", "peanuts"]
+      category: "견과류"
+      isMajorAllergen: true
+
+  - name: 증상_가중치
+    doc_example:
+      id: "respiratory"
+      displayName: "호흡기"
+      symptoms: ["천명", "호흡곤란", "기침"]
+      weight: 2.0
+
+  - name: 위험도_규칙
+    doc_example:
+      id: "rule_peanut_breathing_high"
+      conditions:
+        allergens_any: ["peanut"]
+        symptoms_any: ["respiratory"]
+      scoreDelta: 50
+      severity: "매우 높음"
+
+  - name: 사용자_정보
+    doc_example:
+      id: "<uid>"
+      nickname: "성경"
+      allergens: ["peanut", "wheat"]
+      createdAt: "<timestamp>"
+
+  - name: 사용자_보고
+    doc_example:
+      id: "<autoId>"
+      uid: "<uid>"
+      foodName: "초코바"
+      allergensDetected: ["peanut"]
+      symptomsChecked: ["respiratory"]
+      totalScore: 78
+      finalSeverity: "높음"
+      createdAt: "<timestamp>"
