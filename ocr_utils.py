@@ -5,6 +5,7 @@ import cv2
 import pytesseract
 import numpy as np
 from PIL import Image
+import re
 
 def ocr_image_with_opencv(image, lang="kor+eng"):
     """
