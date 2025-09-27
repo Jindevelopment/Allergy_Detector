@@ -283,38 +283,61 @@ function displayAnalysisResult(data) {
     const extractedTextDiv = document.getElementById('extracted-text');
     extractedTextDiv.textContent = data.extracted_text || '텍스트를 추출할 수 없었습니다.';
     
-    // 사용자 알레르기 프로필과 매칭되는 알레르기 성분 찾기
-    const userMatchedAllergens = matchUserAllergies(data.extracted_text, data.analysis.detected_allergens);
-    
-    // 알레르기 성분 표시 (사용자 프로필과 매칭되는 것만)
+    // 알레르기 성분 표시 (새로운 데이터 구조 사용)
     const allergyListDiv = document.getElementById('allergy-list');
     const allergyWarningSection = document.getElementById('allergy-warning-section');
     
-    if (userMatchedAllergens.length > 0) {
-        allergyListDiv.innerHTML = '';
-        userMatchedAllergens.forEach(allergen => {
+    allergyListDiv.innerHTML = ''; // 기존 내용 제거
+    
+    // 서버에서 전달된 알레르기 정보 사용
+    const userRiskAllergens = data.analysis?.user_risk_allergens || [];
+    const generalDetectedAllergens = data.analysis?.general_detected_allergens || [];
+    const userAllergies = data.analysis?.user_allergies || [];
+    
+    if (userRiskAllergens.length > 0) {
+        // 사용자에게 위험한 알레르기 성분
+        userRiskAllergens.forEach(allergen => {
             const allergyItem = document.createElement('div');
-            allergyItem.className = 'allergy-item';
-            allergyItem.innerHTML = `${allergen.name} <span class="keyword-match">(${allergen.keyword})</span>`;
+            allergyItem.className = 'allergy-item high-risk';
+            allergyItem.innerHTML = `
+                <span class="allergy-name">${allergen.name}</span>
+                <span class="risk-badge">위험!</span>
+            `;
             allergyListDiv.appendChild(allergyItem);
         });
         allergyWarningSection.style.display = 'block';
+    } else if (generalDetectedAllergens.length > 0) {
+        // 일반적으로 감지된 알레르기 성분
+        generalDetectedAllergens.forEach(allergen => {
+            const allergyItem = document.createElement('div');
+            allergyItem.className = 'allergy-item general-risk';
+            allergyItem.innerHTML = `
+                <span class="allergy-name">${allergen.name}</span>
+                <span class="info-badge">주의</span>
+            `;
+            allergyListDiv.appendChild(allergyItem);
+        });
+        allergyWarningSection.style.display = 'block';
+    } else if (userAllergies.length === 0 && isLoggedIn) {
+        // 로그인했지만 알레르기 프로필이 설정되지 않은 경우
+        allergyListDiv.innerHTML = `
+            <div class="profile-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                알레르기 프로필을 먼저 설정해주세요
+            </div>
+        `;
+        allergyWarningSection.style.display = 'block';
     } else {
-        // 알레르기 프로필이 설정되지 않은 경우 안내 메시지
-        if (selectedAllergies.length === 0) {
-            allergyListDiv.innerHTML = '<div class="no-profile-message">⚠️ 알레르기 프로필을 먼저 설정해주세요</div>';
-            allergyWarningSection.style.display = 'block';
-        } else {
-            allergyWarningSection.style.display = 'none';
-        }
+        allergyWarningSection.style.display = 'none';
     }
     
     // 안전한 성분 표시
     const safeIngredientsDiv = document.getElementById('safe-ingredients');
     const safeIngredientsSection = document.getElementById('safe-ingredients-section');
     
-    if (data.analysis.safe_ingredients && data.analysis.safe_ingredients.length > 0) {
-        safeIngredientsDiv.innerHTML = '';
+    safeIngredientsDiv.innerHTML = ''; // 기존 내용 제거
+    
+    if (data.analysis?.safe_ingredients && data.analysis.safe_ingredients.length > 0) {
         data.analysis.safe_ingredients.forEach(ingredient => {
             const safeItem = document.createElement('span');
             safeItem.className = 'safe-ingredient';
@@ -326,18 +349,22 @@ function displayAnalysisResult(data) {
         safeIngredientsSection.style.display = 'none';
     }
     
-    // 메트릭 업데이트 (사용자 매칭 결과 기반)
-    document.getElementById('total-ingredients').textContent = data.analysis.total_ingredients + '개';
-    document.getElementById('confidence').textContent = data.analysis.confidence + '%';
+    // 메트릭 업데이트 (새로운 데이터 구조 기반)
+    document.getElementById('total-ingredients').textContent = (data.analysis?.total_ingredients || 0) + '개';
+    document.getElementById('confidence').textContent = (data.analysis?.confidence || 0) + '%';
     
-    // 위험도 표시 및 색상 설정 (사용자 매칭 결과 기반)
+    // 위험도 표시 및 색상 설정 (새로운 데이터 구조 기반)
     const riskValue = document.getElementById('allergy-risk');
     
-    if (userMatchedAllergens.length > 0) {
+    if (userRiskAllergens.length > 0) {
         // 사용자에게 위험한 알레르기가 발견된 경우
         riskValue.textContent = '🔴 주의 필요';
         riskValue.className = 'metric-value high-risk';
-    } else if (selectedAllergies.length === 0) {
+    } else if (generalDetectedAllergens.length > 0) {
+        // 일반적으로 감지된 알레르기가 있는 경우
+        riskValue.textContent = '🟡 주의';
+        riskValue.className = 'metric-value medium-risk';
+    } else if (userAllergies.length === 0 && isLoggedIn) {
         // 알레르기 프로필이 설정되지 않은 경우
         riskValue.textContent = '❓ 프로필 미설정';
         riskValue.className = 'metric-value medium-risk';

@@ -7,7 +7,7 @@ import io
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
-from src.core.ocr.ocr_utils import extract_text_from_image
+from src.core.ocr.ocr_test import extract_ingredients_from_image
 from src.services.auth.auth_service import register_user, check_login, user_exists
 from src.services.risk.risk_service import analyze_text
 from src.services.profile.profile_service import list_allergies, add_allergy, remove_allergy
@@ -354,68 +354,65 @@ def analyze_image():
         # OCR 실행
         print(f"OCR 분석 시작: {filepath}")
         try:
-            ocr_result = extract_text_from_image(filepath, use_easyocr=True, fast_mode=True)
-            if ocr_result['success']:
-                extracted_text = ocr_result['text']
+            ocr_result = extract_ingredients_from_image(filepath, use_easyocr=True, fast_mode=True)
+            if 'error' not in ocr_result:
+                extracted_text = ocr_result['full_text']
+                detected_allergens = ocr_result['ingredients']  # ocr_test.py에서 이미 알레르기 성분만 추출됨
                 print(f"추출된 텍스트: {extracted_text}")
+                print(f"추출된 알레르기 성분: {detected_allergens}")
             else:
                 print(f"OCR 오류: {ocr_result.get('error', '알 수 없는 오류')}")
                 extracted_text = "정제수, 설탕, 청포도과즙농축액(스페인산), 사과페이스트(칠레산), 펙틴, 구연산, 혼합탈지분유(네덜란드산), 구연산나트륨, 향료2종, 혼합제제(토마틴, 효소처리스테비아, 덱스트린) 우유함유"  # 백업 텍스트
+                detected_allergens = ['우유']  # 백업 알레르기 성분
         except Exception as e:
             print(f"OCR 실행 중 오류: {str(e)}")
             extracted_text = "정제수, 설탕, 청포도과즙농축액(스페인산), 사과페이스트(칠레산), 펙틴, 구연산, 혼합탈지분유(네덜란드산), 구연산나트륨, 향료2종, 혼합제제(토마틴, 효소처리스테비아, 덱스트린) 우유함유"  # 백업 텍스트
+            detected_allergens = ['우유']  # 백업 알레르기 성분
         
-        # 알레르기 성분 분석 (간단한 키워드 매칭)
-        allergy_keywords = {
-            '대두': ['대두', '콩', '두부', '간장', '된장', '고추장'],
-            '밀': ['밀', '밀가루', '면', '빵', '파스타'],
-            '우유': ['우유', '유제품', '치즈', '버터', '크림'],
-            '계란': ['계란', '난백', '난황', '알'],
-            '견과류': ['땅콩', '호두', '아몬드', '캐슈넛', '피스타치오'],
-            '해산물': ['새우', '게', '조개', '굴', '문어', '오징어'],
-            '육류': ['돼지고기', '소고기', '닭고기', '양고기']
-        }
+        # 사용자 알레르기 프로필 가져오기
+        user_allergies = []
+        if session.get('user_id'):
+            try:
+                user_allergies = list_allergies(session['user_id'])
+                print(f"사용자 알레르기 프로필: {user_allergies}")
+            except Exception as e:
+                print(f"사용자 알레르기 프로필 조회 오류: {e}")
         
-        detected_allergens = []
+        # 사용자 프로필과 연동된 알레르기 분석
+        user_risk_allergens = []
+        general_detected_allergens = []
+        
+        # 추출된 알레르기 성분을 사용자 프로필과 비교
+        for allergen in detected_allergens:
+            allergen_info = {
+                'name': allergen,
+                'ingredient': allergen,
+                'risk': 'high',
+                'confidence': 95
+            }
+            
+            # 사용자 알레르기 프로필과 매칭
+            if user_allergies and allergen in user_allergies:
+                allergen_info['user_risk'] = True
+                user_risk_allergens.append(allergen_info)
+            else:
+                allergen_info['user_risk'] = False
+                general_detected_allergens.append(allergen_info)
+        
+        # 전체 성분에서 안전한 성분 추출 (간단한 분리)
         safe_ingredients = []
-        
-        # 텍스트에서 성분 추출 (간단한 분리)
-        ingredients = []
         if extracted_text:
-            # 줄바꿈이나 쉼표로 분리
             lines = extracted_text.replace('\n', ',').split(',')
             for line in lines:
                 ingredient = line.strip()
-                if ingredient and len(ingredient) > 1:
-                    ingredients.append(ingredient)
-        
-        # 알레르기 성분 검사
-        for ingredient in ingredients:
-            is_allergen = False
-            for allergen_type, keywords in allergy_keywords.items():
-                for keyword in keywords:
-                    if keyword in ingredient:
-                        detected_allergens.append({
-                            'name': allergen_type,
-                            'ingredient': ingredient,
-                            'risk': 'high' if allergen_type in ['대두', '밀', '우유'] else 'medium',
-                            'confidence': 90
-                        })
-                        is_allergen = True
-                        break
-                if is_allergen:
-                    break
-            
-            if not is_allergen:
-                safe_ingredients.append(ingredient)
+                if ingredient and len(ingredient) > 1 and ingredient not in detected_allergens:
+                    safe_ingredients.append(ingredient)
         
         # 위험도 계산
-        if detected_allergens:
-            high_risk_count = sum(1 for allergen in detected_allergens if allergen['risk'] == 'high')
-            if high_risk_count > 0:
-                risk_level = 'high'
-            else:
-                risk_level = 'medium'
+        if user_risk_allergens:
+            risk_level = 'high'
+        elif general_detected_allergens:
+            risk_level = 'medium'
         else:
             risk_level = 'low'
         
@@ -423,11 +420,14 @@ def analyze_image():
             'success': True,
             'extracted_text': extracted_text,
             'analysis': {
-                'total_ingredients': len(ingredients),
+                'total_ingredients': len(detected_allergens) + len(safe_ingredients),
                 'allergy_risk': risk_level,
-                'confidence': 85,
+                'confidence': 95,
                 'detected_allergens': detected_allergens,
-                'safe_ingredients': safe_ingredients[:10]  # 최대 10개만 표시
+                'user_risk_allergens': user_risk_allergens,
+                'general_detected_allergens': general_detected_allergens,
+                'safe_ingredients': safe_ingredients[:10],  # 최대 10개만 표시
+                'user_allergies': user_allergies
             }
         }
         
