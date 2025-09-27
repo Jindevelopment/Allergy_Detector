@@ -1,0 +1,185 @@
+const fs = require("fs");
+const path = require("path");
+const csv = require("csv-parser");
+const admin = require("firebase-admin");
+
+const keyPath = path.resolve(__dirname, "serviceAccountKey.json");
+if (!fs.existsSync(keyPath)) {
+  console.error("[ERR] serviceAccountKey.json 이 없습니다. 콘솔에서 발급해서 이 폴더에 넣어주세요.");
+  process.exit(1);
+}
+admin.initializeApp({ credential: admin.credential.cert(require(keyPath)) });
+const db = admin.firestore();
+const FieldValue = admin.firestore.FieldValue;
+
+// db_setup에서 만든 CSV 폴더
+const CSV_DIR = path.resolve(__dirname, "../db_setup/data/csv");
+
+// ── 유틸
+const strip = (s) => (typeof s === "string" ? s.replace(/\uFEFF/g, "").trim() : s);
+const splitArr = (s) => !s ? [] : strip(s).split(/[|,\/，、;；]/).map(x=>x.trim()).filter(Boolean);
+const toBool = (s) => ["true","1","yes","y","예","참","t"].includes(String(s).toLowerCase().trim());
+const toNum  = (s) => { if(s===""||s==null) return null; const n=Number(String(s).replace(/,/g,"")); return Number.isNaN(n)?null:n; };
+const slug   = (s) => strip(s).toLowerCase().replace(/[^\w가-힣]+/g,"-").replace(/^-+|-+$/g,"");
+
+// 여러 후보 키 중 첫 값
+const pick = (row, keys=[]) => {
+  for (const k of keys) if (k in row && row[k] != null && String(row[k]).trim() !== "") return strip(row[k]);
+  return "";
+};
+
+// 자동/명시 ID
+const docRef = (col, id) => (id ? db.collection(col).doc(id) : db.collection(col).doc());
+
+// ── 헤더 별칭(한글 우선 + 영문 허용)
+const H = {
+  allergen: {
+    id:            ["문서ID","아이디","ID","id"],
+    name:          ["표시명","이름","명칭","displayName","name"],
+    synonyms:      ["동의어","유의어","synonyms"],
+    category:      ["분류","카테고리","category"],
+    major:         ["주요알레르겐","주요","isMajorAllergen"],
+  },
+  symptom: {
+    id:            ["문서ID","아이디","ID","id"],
+    name:          ["표시명","이름","displayName","name"],
+    symptoms:      ["증상목록","증상_목록","증상","symptoms"],
+    weight:        ["가중치","점수","weight"],
+  },
+  rule: {
+    id:            ["문서ID","아이디","ID","id"],
+    allergens_any: ["알레르겐_포함","알레르겐포함","알레르겐_any","allergens_any"],
+    symptoms_any:  ["증상_포함","증상포함","증상_any","symptoms_any"],
+    scoreDelta:    ["점수증가","점수변화","점수","scoreDelta"],
+    severity:      ["중증도","위험도","severity"],
+  },
+  user: {
+    id:            ["문서ID","아이디","ID","id"],
+    nickname:      ["닉네임","별명","nickname","name"],
+    allergens:     ["알레르겐","알레르겐목록","allergens"],
+  }
+};
+
+// ── CSV 로더
+function loadCsv(file){
+  return new Promise((resolve,reject)=>{
+    const rows=[];
+    fs.createReadStream(file)
+      .pipe(csv())
+      .on("data",(raw)=>{
+        const row={};
+        for (const [k,v] of Object.entries(raw)) row[strip(k)]=strip(v);
+        rows.push(row);
+      })
+      .on("end",()=>resolve(rows))
+      .on("error",reject);
+  });
+}
+
+// ── 배치 커밋
+async function commitBatches(ops,size=450){
+  for (let i=0;i<ops.length;i+=size){
+    const batch=db.batch();
+    const slice=ops.slice(i,i+size);
+    slice.forEach(({ref,data})=>batch.set(ref,data,{merge:true}));
+    await batch.commit();
+    console.log(`[OK] batch commit ${i+slice.length}/${ops.length}`);
+  }
+}
+
+// ── 업로드 (필드명도 한글로 저장)
+async function uploadAllergenList(){
+  const file=path.join(CSV_DIR,"알레르겐_목록.csv");
+  if(!fs.existsSync(file)) return console.log("[SKIP] 알레르겐_목록.csv 없음");
+  const rows=await loadCsv(file);
+  const ops=rows.map(r=>{
+    const id = pick(r, H.allergen.id) || slug(pick(r, H.allergen.name));
+    const data={
+      "이름":         pick(r, H.allergen.name),
+      "분류":         pick(r, H.allergen.category),
+      "동의어":       splitArr(pick(r, H.allergen.synonyms)),
+      "주요알레르겐": toBool(pick(r, H.allergen.major)),
+      "업데이트시각": FieldValue.serverTimestamp(),
+    };
+    const ref=docRef("알레르겐_목록", id);
+    return {ref,data};
+  });
+  await commitBatches(ops);
+}
+
+async function uploadSymptomWeights(){
+  const file=path.join(CSV_DIR,"증상_가중치.csv");
+  if(!fs.existsSync(file)) return console.log("[SKIP] 증상_가중치.csv 없음");
+  const rows=await loadCsv(file);
+  const ops=rows.map(r=>{
+    const id = pick(r, H.symptom.id) || slug(pick(r, H.symptom.name));
+    const data={
+      "이름":         pick(r, H.symptom.name),
+      "증상목록":     splitArr(pick(r, H.symptom.symptoms)),
+      "가중치":       toNum(pick(r, H.symptom.weight)),
+      "업데이트시각": FieldValue.serverTimestamp(),
+    };
+    const ref=docRef("증상_가중치", id);
+    return {ref,data};
+  });
+  await commitBatches(ops);
+}
+
+async function uploadRiskRules(){
+  const file=path.join(CSV_DIR,"위험도_규칙.csv");
+  if(!fs.existsSync(file)) return console.log("[SKIP] 위험도_규칙.csv 없음");
+  const rows=await loadCsv(file);
+  const ops=rows.map(r=>{
+    const sev = pick(r, H.rule.severity) || "규칙";
+    const id  = pick(r, H.rule.id) || slug(`${sev}-${pick(r,H.rule.allergens_any)}-${pick(r,H.rule.symptoms_any)}`);
+    const data={
+      "조건": {
+        "알레르겐_포함": splitArr(pick(r, H.rule.allergens_any)),
+        "증상_포함":    splitArr(pick(r, H.rule.symptoms_any)),
+      },
+      "점수증가":     toNum(pick(r, H.rule.scoreDelta)),
+      "중증도":       sev,
+      "업데이트시각": FieldValue.serverTimestamp(),
+    };
+    const ref=docRef("위험도_규칙", id);
+    return {ref,data};
+  });
+  await commitBatches(ops);
+}
+
+// (선택) 사용자 씨드
+async function uploadUserSeeds(){
+  const file=path.join(CSV_DIR,"사용자_정보.csv");
+  if(!fs.existsSync(file)) return console.log("[SKIP] 사용자_정보.csv 없음");
+  const rows=await loadCsv(file);
+  const ops=rows.map(r=>{
+    const id = pick(r, H.user.id) || slug(pick(r, H.user.nickname) || "user");
+    const data={
+      "닉네임":       pick(r, H.user.nickname),
+      "알레르겐":     splitArr(pick(r, H.user.allergens)),
+      "생성시각":     FieldValue.serverTimestamp(),
+      "업데이트시각": FieldValue.serverTimestamp(),
+    };
+    const ref=docRef("사용자_정보", id);
+    return {ref,data};
+  });
+  await commitBatches(ops);
+}
+
+async function main(){
+  const onlyBase  = process.argv.includes("--base");      // 기준 3개만
+  const seedUsers = process.argv.includes("--seed-users");// 사용자 씨드 포함
+  console.log("[INFO] CSV DIR:", CSV_DIR);
+
+  await uploadAllergenList();
+  await uploadSymptomWeights();
+  await uploadRiskRules();
+
+  if(!onlyBase && seedUsers){
+    await uploadUserSeeds();
+  }
+  console.log("[DONE] 업로드 완료");
+  process.exit(0);
+}
+
+main().catch(e=>{ console.error(e); process.exit(1); });

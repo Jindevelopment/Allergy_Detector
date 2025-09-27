@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>로그인 - AI 알레르기 가이드</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans KR', sans-serif;
+        }
+        
+        .login-container {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .login-card {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+        
+        .login-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .login-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        
+        .login-logo .logo-icon {
+            font-size: 24px;
+            margin-right: 10px;
+        }
+        
+        .login-logo .logo-text {
+            font-size: 20px;
+            font-weight: 400;
+            color: #333;
+            font-family: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+            letter-spacing: -0.5px;
+        }
+        
+        .login-subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .login-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .login-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            box-sizing: border-box;
+        }
+        
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .input-with-icon {
+            position: relative;
+        }
+        
+        .input-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #999;
+            font-size: 18px;
+        }
+        
+        .form-input.with-icon {
+            padding-left: 50px;
+        }
+        
+        .password-toggle {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #999;
+            cursor: pointer;
+            font-size: 18px;
+        }
+        
+        .login-options {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .remember-me {
+            display: flex;
+            align-items: center;
+        }
+        
+        .remember-me input {
+            margin-right: 8px;
+        }
+        
+        .forgot-password {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        
+        .forgot-password:hover {
+            text-decoration: underline;
+        }
+        
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-bottom: 20px;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .divider {
+            text-align: center;
+            margin: 20px 0;
+            position: relative;
+        }
+        
+        .divider::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: #e1e5e9;
+        }
+        
+        .divider span {
+            background: white;
+            padding: 0 20px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .social-login {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .social-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            background: white;
+            color: #333;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .social-btn:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+        }
+        
+        .google-btn {
+            background: white;
+        }
+        
+        .kakao-btn {
+            background: #FEE500;
+            border-color: #FEE500;
+        }
+        
+        .social-icon {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+        
+        .signup-link {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .signup-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .signup-link a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .success-message {
+            background: #efe;
+            color: #363;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .header-nav {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 20px;
+        }
+        
+        .nav-link {
+            color: white;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            text-decoration: underline;
+        }
+        
+        .floating-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transition: transform 0.2s;
+        }
+        
+        .floating-btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 480px) {
+            .login-card {
+                padding: 30px 20px;
+                margin: 10px;
+            }
+            
+            .header-nav {
+                position: static;
+                justify-content: center;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 헤더 네비게이션 -->
+    <div class="header-nav">
+        <a href="{{ url_for('home') }}" class="nav-link">서비스</a>
+        <a href="{{ url_for('home') }}" class="nav-link">기능</a>
+        <a href="{{ url_for('home') }}" class="nav-link">도움말</a>
+    </div>
+
+    <div class="login-container">
+        <div class="login-card">
+            <!-- 로그인 헤더 -->
+            <div class="login-header">
+                <div class="login-logo">
+                    <span class="logo-icon">🍽️</span>
+                    <span class="logo-text">조시해eat</span>
+                </div>
+                <div class="login-subtitle">안전한 식품 선택을 위한 첫 걸음</div>
+            </div>
+            
+            <h1 class="login-title">로그인</h1>
+            <p class="login-description">계정에 로그인하여 개인 맞춤 서비스를 이용하세요</p>
+            
+            <!-- 에러/성공 메시지 -->
+            {% if error %}
+            <div class="error-message">{{ error }}</div>
+            {% endif %}
+            
+            {% if success %}
+            <div class="success-message">{{ success }}</div>
+            {% endif %}
+            
+            <!-- 로그인 폼 -->
+            <form method="POST" action="{{ url_for('login_post') }}">
+                <div class="form-group">
+                    <label class="form-label">이메일</label>
+                    <div class="input-with-icon">
+                        <span class="input-icon">✉️</span>
+                        <input type="email" name="email" class="form-input with-icon" placeholder="이메일을 입력하세요" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">비밀번호</label>
+                    <div class="input-with-icon">
+                        <span class="input-icon">🔒</span>
+                        <input type="password" name="password" id="password" class="form-input with-icon" placeholder="비밀번호를 입력하세요" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">👁️</button>
+                    </div>
+                </div>
+                
+                <div class="login-options">
+                    <div class="remember-me">
+                        <input type="checkbox" id="remember" name="remember">
+                        <label for="remember">로그인 상태 유지</label>
+                    </div>
+                    <a href="#" class="forgot-password">비밀번호 찾기</a>
+                </div>
+                
+                <button type="submit" class="login-btn">로그인</button>
+            </form>
+            
+            <!-- 구분선 -->
+            <div class="divider">
+                <span>또는</span>
+            </div>
+            
+            <!-- 소셜 로그인 -->
+            <div class="social-login">
+                <a href="#" class="social-btn google-btn">
+                    <span class="social-icon">G</span>
+                    Google로 로그인
+                </a>
+                <a href="#" class="social-btn kakao-btn">
+                    <span class="social-icon">💬</span>
+                    카카오로 로그인
+                </a>
+            </div>
+            
+            <!-- 회원가입 링크 -->
+            <div class="signup-link">
+                아직 계정이 없으신가요? <a href="{{ url_for('signup') }}">회원가입</a>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 플로팅 버튼 -->
+    <a href="#" class="floating-btn">💬 Talk with Us</a>
+
+    <script>
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.password-toggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = '🙈';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = '👁️';
+            }
+        }
+    </script>
+</body>
+</html>

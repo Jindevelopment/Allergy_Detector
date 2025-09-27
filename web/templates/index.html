@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 알레르기 가이드</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🍽️</span>
+                <span class="logo-text">조시해eat</span>
+            </div>
+            <nav class="nav">
+                <a href="#" class="nav-item">서비스</a>
+                <a href="#" class="nav-item">기능</a>
+                <a href="#" class="nav-item">도움말</a>
+                
+                {% if is_logged_in %}
+                    <div class="user-menu">
+                        <span class="user-name">{{ user_name }}님</span>
+                        <a href="{{ url_for('mypage') }}" class="nav-item">마이페이지</a>
+                        <a href="{{ url_for('logout') }}" class="btn-logout">로그아웃</a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-item">로그인</a>
+                    <a href="{{ url_for('signup') }}" class="btn-signup">회원가입</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- 히어로 섹션 -->
+    <section class="hero">
+        <div class="container">
+            <h1 class="hero-title">
+                AI로 분석하는<br>
+                <span class="highlight">스마트 알레르기 안전 가이드</span>
+            </h1>
+            <p class="hero-subtitle">
+                식품 성분표를 촬영하면 AI가 자동으로 분석하여<br>
+                개인 맞춤형 알레르기 위험도를 신호등 방식으로 알려드립니다
+            </p>
+            <div class="hero-buttons">
+                <button class="btn-primary" onclick="scrollToSection('allergy-profile')">지금 시작하기</button>
+                <button class="btn-secondary" onclick="showUsageModal()">사용법 보기</button>
+            </div>
+            
+            <!-- 히어로 내부 기능 카드들 -->
+            <div class="hero-features">
+                <div class="hero-feature-card">
+                    <div class="hero-feature-icon yellow-bg">📷</div>
+                    <h3 class="hero-feature-title">간편한 촬영</h3>
+                    <p class="hero-feature-desc">성분표를 촬영하기만 하면 끝</p>
+                </div>
+                <div class="hero-feature-card">
+                    <div class="hero-feature-icon green-bg">🤖</div>
+                    <h3 class="hero-feature-title">AI 자동 분석</h3>
+                    <p class="hero-feature-desc">정확한 성분 인식과 분석</p>
+                </div>
+                <div class="hero-feature-card">
+                    <div class="hero-feature-icon red-bg">🚦</div>
+                    <h3 class="hero-feature-title">신호등 안내</h3>
+                    <p class="hero-feature-desc">직관적인 위험도 표시</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 알레르기 프로필 설정 -->
+    <section class="allergy-profile" id="allergy-profile">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="title-icon">🧑‍⚕️</span>
+                알레르기 프로필 설정
+            </h2>
+            <p class="section-subtitle">개인별 알레르기 정보를 등록하고 맞춤형 분석을 받아보세요</p>
+            
+            <div class="allergy-grid">
+                <div class="allergy-item" data-allergy="난류">
+                    <div class="allergy-emoji">🥚</div>
+                    <div class="allergy-name">난류</div>
+                </div>
+                <div class="allergy-item" data-allergy="우유">
+                    <div class="allergy-emoji">🥛</div>
+                    <div class="allergy-name">우유</div>
+                </div>
+                <div class="allergy-item" data-allergy="메밀">
+                    <div class="allergy-emoji">🌾</div>
+                    <div class="allergy-name">메밀</div>
+                </div>
+                <div class="allergy-item" data-allergy="땅콩">
+                    <div class="allergy-emoji">🥜</div>
+                    <div class="allergy-name">땅콩</div>
+                </div>
+                <div class="allergy-item" data-allergy="대두">
+                    <div class="allergy-emoji">🫘</div>
+                    <div class="allergy-name">대두</div>
+                </div>
+                <div class="allergy-item" data-allergy="밀">
+                    <div class="allergy-emoji">🌾</div>
+                    <div class="allergy-name">밀</div>
+                </div>
+                <div class="allergy-item" data-allergy="고등어">
+                    <div class="allergy-emoji">🐟</div>
+                    <div class="allergy-name">고등어</div>
+                </div>
+                <div class="allergy-item" data-allergy="게">
+                    <div class="allergy-emoji">🦀</div>
+                    <div class="allergy-name">게</div>
+                </div>
+                <div class="allergy-item" data-allergy="새우">
+                    <div class="allergy-emoji">🦐</div>
+                    <div class="allergy-name">새우</div>
+                </div>
+                <div class="allergy-item" data-allergy="돼지고기">
+                    <div class="allergy-emoji">🐷</div>
+                    <div class="allergy-name">돼지고기</div>
+                </div>
+                <div class="allergy-item" data-allergy="복숭아">
+                    <div class="allergy-emoji">🍑</div>
+                    <div class="allergy-name">복숭아</div>
+                </div>
+                <div class="allergy-item" data-allergy="토마토">
+                    <div class="allergy-emoji">🍅</div>
+                    <div class="allergy-name">토마토</div>
+                </div>
+            </div>
+            
+            <div class="custom-allergy">
+                <input type="text" id="custom-allergy-input" placeholder="직접 입력하기">
+                <button class="btn-add" onclick="addCustomAllergy()">추가</button>
+            </div>
+            
+            <div class="selected-allergies" id="selected-allergies">
+                <h3>선택된 알레르기:</h3>
+                <div class="selected-list" id="selected-list"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 성분표 분석 섹션 -->
+    <section class="analysis-section">
+        <div class="container">
+            <h2 class="section-title">
+                <span class="title-icon">📷</span>
+                성분표 분석
+            </h2>
+            <p class="section-subtitle">식품 성분표 이미지를 업로드하면 AI가 알레르기 위험도를 분석해드립니다</p>
+            
+            <div class="upload-area" id="upload-area">
+                <div class="upload-icon">📷</div>
+                <h3>성분표 사진을 업로드하세요</h3>
+                <p>드래그 앤 드롭하거나 아래 버튼을 사용하세요</p>
+                <input type="file" id="file-input" accept="image/*" style="display: none;">
+            </div>
+            
+            <div class="upload-buttons">
+                <button class="btn-file-select" onclick="document.getElementById('file-input').click()">
+                    <span class="btn-icon">📁</span>
+                    파일 선택
+                </button>
+                <button class="btn-camera" onclick="openCamera()">
+                    <span class="btn-icon">📷</span>
+                    카메라 촬영
+                </button>
+            </div>
+            
+            <div class="uploaded-image" id="uploaded-image" style="display: none;">
+                <div class="image-container">
+                    <img id="preview-image" src="" alt="업로드된 이미지">
+                </div>
+                <div class="uploaded-buttons">
+                    <button class="btn-reupload" onclick="resetUpload()">🔄 재업로드</button>
+                    <button class="btn-analyze" onclick="analyzeImage()">🔍 성분 분석 시작</button>
+                </div>
+            </div>
+            
+            <div class="analysis-result" id="analysis-result" style="display: none;">
+                <div class="result-header">
+                    <h3>✅ 분석 완료!</h3>
+                    <p class="result-subtitle">성분표 분석이 완료되었습니다</p>
+                </div>
+                
+                <div class="extracted-text-section">
+                    <h4>⚠️ 알레르기 유발 주의 성분</h4>
+                    <div class="extracted-text" id="extracted-text"></div>
+                </div>
+                
+                <div class="allergy-warning-section" id="allergy-warning-section">
+                    <h4>⚠️ 주의해야 할 알레르기 성분</h4>
+                    <div class="allergy-list" id="allergy-list"></div>
+                </div>
+                
+                <div class="safe-ingredients-section" id="safe-ingredients-section">
+                    <h4>✅ 안전한 성분</h4>
+                    <div class="safe-ingredients" id="safe-ingredients"></div>
+                </div>
+                
+                <div class="result-metrics">
+                    <div class="metric-card">
+                        <div class="metric-value" id="total-ingredients">0개</div>
+                        <div class="metric-label">인식된 성분</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="allergy-risk">낮음</div>
+                        <div class="metric-label">알레르기 위험</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value" id="confidence">0%</div>
+                        <div class="metric-label">신뢰도</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="analysis-steps">
+                <div class="step">
+                    <div class="step-icon green-step">✓</div>
+                    <div class="step-title">즉시 분석</div>
+                    <div class="step-desc">JPG, PNG 파일 지원</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon blue-step">🛡️</div>
+                    <div class="step-title">정확한 판별</div>
+                    <div class="step-desc">성분 자동 인식</div>
+                </div>
+                <div class="step">
+                    <div class="step-icon orange-step">🚦</div>
+                    <div class="step-title">직관적 표시</div>
+                    <div class="step-desc">신호등 방식 표시</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 기능 소개 섹션 -->
+    <section class="why-choose">
+        <div class="container">
+            <h2 class="section-title">왜 AI 알레르기 가이드를 선택해야 할까요?</h2>
+            <p class="section-subtitle">AI 기반 알레르기 안전 관리 서비스의 강력한 기능들을 확인해보세요</p>
+            
+            <div class="features-grid-large">
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">🤖</div>
+                    <h3>AI 기반 분석</h3>
+                    <p>최신 AI 기술로 성분표를 정확하게 인식하고 알레르기 위험도를 자동으로 분석합니다</p>
+                </div>
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">🛡️</div>
+                    <h3>신호등 위험 표시</h3>
+                    <p>직관적인 신호등 방식으로 위험도를 표시하여 누구나 쉽게 이해할 수 있습니다</p>
+                </div>
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">⚡</div>
+                    <h3>빠른 스캔 속도</h3>
+                    <p>몇 초 만에 성분표를 스캔하고 분석 결과를 확인할 수 있어 매우 편리합니다</p>
+                </div>
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">📱</div>
+                    <h3>모바일 최적화</h3>
+                    <p>언제 어디서나 스마트폰으로 간편하게 성분표를 촬영하고 분석할 수 있습니다</p>
+                </div>
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">📊</div>
+                    <h3>상세한 분석 리포트</h3>
+                    <p>단순한 결과가 아닌 상세한 분석 내용과 개선 방안을 제공합니다</p>
+                </div>
+                <div class="feature-card-large">
+                    <div class="feature-icon-large">🗃️</div>
+                    <h3>알레르기 데이터베이스</h3>
+                    <p>식약처 공인 알레르기 데이터베이스를 기반으로 정확한 정보를 제공합니다</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA 섹션 -->
+    <section class="cta-section">
+        <div class="container">
+            <h2 class="cta-title">지금 바로 시작해보세요!</h2>
+            <p class="cta-subtitle">무료로 알레르기 안전 관리 서비스를 체험하고 건강한 식생활을 시작하세요</p>
+            <button class="btn-cta" onclick="scrollToSection('allergy-profile')">무료로 시작하기</button>
+        </div>
+    </section>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h4>🛡️ 알레르기 가이드</h4>
+                    <p>AI 기반 알레르기 안전 관리 서비스로<br>건강한 식생활을 도와드립니다.</p>
+                    <div class="social-icons">
+                        <span>📧</span>
+                        <span>💬</span>
+                        <span>📱</span>
+                    </div>
+                </div>
+                <div class="footer-section">
+                    <h4>서비스</h4>
+                    <ul>
+                        <li><a href="#">제품 소개</a></li>
+                        <li><a href="#">기능 안내</a></li>
+                        <li><a href="#">요금제</a></li>
+                        <li><a href="#">API 문서</a></li>
+                    </ul>
+                </div>
+                <div class="footer-section">
+                    <h4>고객 지원</h4>
+                    <ul>
+                        <li><a href="#">고객센터</a></li>
+                        <li><a href="#">사용법 가이드</a></li>
+                        <li><a href="#">FAQ</a></li>
+                        <li><a href="#">문의하기</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 알레르기 안전 탐지기. 모든 권리 보유. | Powered by Cursor AI</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- 플로팅 버튼 -->
+    <div class="floating-btn">
+        💬 Talk with us
+    </div>
+
+    <!-- 로딩 오버레이 -->
+    <div class="loading-overlay" id="loading-overlay" style="display: none;">
+        <div class="loading-spinner"></div>
+        <p>AI가 성분표를 분석 중입니다...</p>
+    </div>
+
+    <!-- 사용법 모달 -->
+    <div class="modal-overlay" id="usage-modal" style="display: none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>AI 알레르기 가이드 사용법</h2>
+                <button class="modal-close" onclick="closeUsageModal()">&times;</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="usage-steps">
+                    <div class="usage-step">
+                        <div class="step-icon-modal red-step">👤</div>
+                        <h3>1단계: 알레르기 설정</h3>
+                        <p>본인의 알레르기 정보를 등록하여<br>개인 맞춤 분석을 받으세요</p>
+                    </div>
+                    <div class="usage-step">
+                        <div class="step-icon-modal blue-step">📷</div>
+                        <h3>2단계: 성분표 촬영</h3>
+                        <p>식품 포장의 성분표를 선명하게<br>촬영하거나 업로드하세요</p>
+                    </div>
+                    <div class="usage-step">
+                        <div class="step-icon-modal green-step">🚦</div>
+                        <h3>3단계: 결과 확인</h3>
+                        <p>AI가 분석한 위험도를<br>신호등 방식으로 확인하세요</p>
+                    </div>
+                </div>
+                
+                <div class="shooting-tips">
+                    <div class="tips-header">
+                        <span class="tips-icon">💡</span>
+                        <h3>촬영 팁</h3>
+                    </div>
+                    <div class="tips-grid">
+                        <div class="tip-item">
+                            <span class="check-icon">✓</span>
+                            <span>성분표 전체가 보이도록 촬영</span>
+                        </div>
+                        <div class="tip-item">
+                            <span class="check-icon">✓</span>
+                            <span>흔들림 없이 선명하게</span>
+                        </div>
+                        <div class="tip-item">
+                            <span class="check-icon">✓</span>
+                            <span>충분한 조명 확보</span>
+                        </div>
+                        <div class="tip-item">
+                            <span class="check-icon">✓</span>
+                            <span>글자가 잘 보이는 각도</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-modal-start" onclick="closeUsageModal(); scrollToSection('allergy-profile')">지금 시작하기</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
