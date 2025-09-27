@@ -1,5 +1,5 @@
 # backend/risk_service.py
-from backend.db_client import get_db
+from src.database.clients.db_client import get_db
 import re
 import operator
 from typing import List, Dict, Any

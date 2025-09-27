@@ -1,2 +1,7 @@
+# Firebase 키 & 로컬 가상환경 무시
+serviceAccountKey.json
+cursorAI/
+db_setup/cursorAI/
+Allergy_Detector/.streamlit/
 __pycache__/
-allergy_detector.db
+*.pyc

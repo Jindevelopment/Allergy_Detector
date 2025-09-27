@@ -1,6 +1,6 @@
 import bcrypt
 from datetime import datetime
-from backend.db_client import get_db
+from src.database.clients.db_client import get_db
 
 db = get_db()
 

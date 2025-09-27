@@ -28,3 +28,9 @@ def ocr_image_with_opencv(image, lang="kor+eng"):
     text = pytesseract.image_to_string(thresh, lang=lang, config=config)
 
     return text.strip()
+
+def extract_text_from_image(image, lang="kor+eng"):
+    """
+    Flask 앱에서 사용하는 OCR 함수 (호환성을 위한 래퍼)
+    """
+    return ocr_image_with_opencv(image, lang)

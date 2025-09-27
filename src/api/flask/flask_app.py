@@ -4,10 +4,19 @@ from werkzeug.utils import secure_filename
 import base64
 from PIL import Image
 import io
-from ocr_utils import extract_text_from_image
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
+from src.core.ocr.ocr_utils import extract_text_from_image
+from src.services.auth.auth_service import register_user, check_login, user_exists
+from src.services.risk.risk_service import analyze_text
+from src.services.profile.profile_service import list_allergies, add_allergy, remove_allergy
+from src.services.report.report_service import save_report, get_recent_reports
 
-app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = 'uploads'
+app = Flask(__name__, 
+            template_folder='../../../web/templates',
+            static_folder='../../../web/static')
+app.config['UPLOAD_FOLDER'] = os.path.join(os.path.dirname(__file__), '../../../web/uploads')
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.secret_key = 'your-secret-key-here'  # 세션을 위한 시크릿 키
 
@@ -233,4 +242,4 @@ def save_allergies():
     return jsonify({'success': True, 'message': '알레르기 정보가 저장되었습니다.'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=3000)
+    app.run(debug=True, host='0.0.0.0', port=5000)

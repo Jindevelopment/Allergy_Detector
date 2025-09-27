@@ -1,4 +1,4 @@
-from backend.risk_service import analyze_text
+from src.services.risk.risk_service import analyze_text
 
 def analyze_text_only(text: str, symptoms: list[str], options=None):
     """
