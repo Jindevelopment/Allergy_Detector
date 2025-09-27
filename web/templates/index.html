@@ -16,9 +16,9 @@
                 <span class="logo-text">조시해eat</span>
             </div>
             <nav class="nav">
-                <a href="#" class="nav-item">서비스</a>
-                <a href="#" class="nav-item">기능</a>
-                <a href="#" class="nav-item">도움말</a>
+                <a href="{{ url_for('service') }}" class="nav-item">서비스</a>
+                <a href="{{ url_for('features') }}" class="nav-item">기능</a>
+                <a href="{{ url_for('help') }}" class="nav-item">도움말</a>
                 
                 {% if is_logged_in %}
                     <div class="user-menu">

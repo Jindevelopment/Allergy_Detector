@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>기능 소개 - AI 알레르기 가이드</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🍽️</span>
+                <span class="logo-text">조시해eat</span>
+            </div>
+            <nav class="nav">
+                <a href="{{ url_for('home') }}" class="nav-item">홈</a>
+                <a href="{{ url_for('service') }}" class="nav-item">서비스</a>
+                <a href="{{ url_for('features') }}" class="nav-item active">기능</a>
+                <a href="{{ url_for('help') }}" class="nav-item">도움말</a>
+                
+                {% if session.user_id %}
+                    <div class="user-menu">
+                        <span class="user-name">{{ session.user_name }}님</span>
+                        <a href="{{ url_for('mypage') }}" class="nav-item">마이페이지</a>
+                        <a href="{{ url_for('logout') }}" class="btn-logout">로그아웃</a>
+                    </div>
+                {% else %}
+                    <div class="user-menu">
+                        <a href="{{ url_for('login') }}" class="nav-item">로그인</a>
+                        <a href="{{ url_for('signup') }}" class="nav-item">회원가입</a>
+                    </div>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="container">
+            <!-- 기능 소개 헤더 -->
+            <section class="features-header">
+                <h1 class="page-title">🔧 주요 기능</h1>
+                <p class="page-subtitle">조시해eat의 강력한 기능들을 만나보세요</p>
+            </section>
+
+            <!-- OCR 텍스트 추출 -->
+            <section class="feature-detail">
+                <div class="feature-content">
+                    <div class="feature-text">
+                        <h2 class="feature-title">📸 OCR 텍스트 추출</h2>
+                        <p class="feature-description">
+                            고급 OCR(광학 문자 인식) 기술을 사용하여 성분표 이미지에서 
+                            텍스트를 정확하게 추출합니다. 다양한 폰트와 레이아웃을 
+                            지원하여 높은 인식률을 자랑합니다.
+                        </p>
+                        <ul class="feature-list">
+                            <li>다양한 이미지 포맷 지원 (JPG, PNG, GIF)</li>
+                            <li>실시간 이미지 업로드 및 처리</li>
+                            <li>카메라 촬영 기능</li>
+                            <li>높은 텍스트 인식 정확도</li>
+                        </ul>
+                    </div>
+                    <div class="feature-visual">
+                        <div class="demo-box">
+                            <span class="demo-icon">📷</span>
+                            <p>이미지 업로드</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- AI 알레르기 분석 -->
+            <section class="feature-detail reverse">
+                <div class="feature-content">
+                    <div class="feature-visual">
+                        <div class="demo-box">
+                            <span class="demo-icon">🤖</span>
+                            <p>AI 분석 엔진</p>
+                        </div>
+                    </div>
+                    <div class="feature-text">
+                        <h2 class="feature-title">🤖 AI 알레르기 분석</h2>
+                        <p class="feature-description">
+                            인공지능 알고리즘을 통해 추출된 성분 정보에서 
+                            알레르기 유발 성분을 정확하게 식별하고 위험도를 평가합니다.
+                        </p>
+                        <ul class="feature-list">
+                            <li>12가지 주요 알레르기 성분 감지</li>
+                            <li>실시간 위험도 평가</li>
+                            <li>신뢰도 점수 제공</li>
+                            <li>상세한 분석 리포트</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 개인 맞춤 프로필 -->
+            <section class="feature-detail">
+                <div class="feature-content">
+                    <div class="feature-text">
+                        <h2 class="feature-title">👤 개인 맞춤 프로필</h2>
+                        <p class="feature-description">
+                            개인의 알레르기 정보를 등록하여 맞춤형 분석 결과를 제공합니다. 
+                            사용자별로 다른 알레르기 프로필을 관리할 수 있습니다.
+                        </p>
+                        <ul class="feature-list">
+                            <li>개인 알레르기 정보 등록</li>
+                            <li>심각도별 알레르기 관리</li>
+                            <li>맞춤형 분석 결과</li>
+                            <li>프로필 수정 및 삭제</li>
+                        </ul>
+                    </div>
+                    <div class="feature-visual">
+                        <div class="demo-box">
+                            <span class="demo-icon">👤</span>
+                            <p>개인 프로필</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 분석 기록 관리 -->
+            <section class="feature-detail reverse">
+                <div class="feature-content">
+                    <div class="feature-visual">
+                        <div class="demo-box">
+                            <span class="demo-icon">📊</span>
+                            <p>분석 기록</p>
+                        </div>
+                    </div>
+                    <div class="feature-text">
+                        <h2 class="feature-title">📊 분석 기록 관리</h2>
+                        <p class="feature-description">
+                            모든 분석 결과를 자동으로 저장하여 언제든지 
+                            이전 분석 기록을 확인할 수 있습니다.
+                        </p>
+                        <ul class="feature-list">
+                            <li>분석 이력 자동 저장</li>
+                            <li>날짜별 기록 조회</li>
+                            <li>안전/위험 상태 표시</li>
+                            <li>검색 및 필터링</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 지원 알레르기 성분 -->
+            <section class="allergen-list">
+                <h2 class="section-title">지원하는 알레르기 성분</h2>
+                <div class="allergen-grid">
+                    <div class="allergen-item">난류</div>
+                    <div class="allergen-item">우유</div>
+                    <div class="allergen-item">메밀</div>
+                    <div class="allergen-item">땅콩</div>
+                    <div class="allergen-item">대두</div>
+                    <div class="allergen-item">밀</div>
+                    <div class="allergen-item">고등어</div>
+                    <div class="allergen-item">게</div>
+                    <div class="allergen-item">새우</div>
+                    <div class="allergen-item">돼지고기</div>
+                    <div class="allergen-item">복숭아</div>
+                    <div class="allergen-item">토마토</div>
+                </div>
+            </section>
+
+            <!-- CTA 섹션 -->
+            <section class="cta-section">
+                <h2 class="cta-title">지금 시작해보세요!</h2>
+                <p class="cta-description">안전한 식품 선택을 위한 첫 걸음을 내딛어보세요.</p>
+                <div class="cta-buttons">
+                    <a href="{{ url_for('home') }}" class="btn-primary">분석 시작하기</a>
+                    {% if not session.user_id %}
+                        <a href="{{ url_for('signup') }}" class="btn-secondary">회원가입</a>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 조시해eat. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

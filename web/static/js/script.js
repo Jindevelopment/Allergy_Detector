@@ -6,6 +6,12 @@ let uploadedFilename = null;
 // 페이지 로드 시 초기화
 document.addEventListener('DOMContentLoaded', function() {
     initializeEventListeners();
+    
+    // 프로필 페이지인 경우 알레르기 목록과 분석 기록 로드
+    if (window.location.pathname === '/mypage') {
+        loadUserAllergies();
+        loadAnalysisHistory();
+    }
 });
 
 // 이벤트 리스너 초기화
@@ -347,6 +353,9 @@ function displayAnalysisResult(data) {
     // 결과로 스크롤
     resultDiv.scrollIntoView({ behavior: 'smooth' });
     
+    // 분석 기록 저장
+    saveAnalysisResult(data);
+    
     // 성공 알림
     showNotification('성분표 분석이 완료되었습니다!', 'success');
 }
@@ -490,6 +499,233 @@ function saveAllergies() {
     .catch(error => {
         console.error('Error:', error);
         showNotification('저장 중 오류가 발생했습니다.', 'error');
+    });
+}
+
+// 프로필 페이지 관련 함수들
+// 페이지 로드 시 알레르기 목록 로드
+function loadUserAllergies() {
+    fetch('/get_allergies', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayUserAllergies(data.allergies);
+        } else {
+            console.error('알레르기 로딩 실패:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// 사용자 알레르기 목록 표시
+function displayUserAllergies(allergies) {
+    const allergyList = document.getElementById('user-allergy-list');
+    if (!allergyList) return;
+    
+    allergyList.innerHTML = '';
+    
+    if (allergies.length === 0) {
+        allergyList.innerHTML = '<div class="no-allergies">등록된 알레르기 정보가 없습니다.</div>';
+        return;
+    }
+    
+    allergies.forEach(allergy => {
+        const allergyItem = document.createElement('div');
+        allergyItem.className = 'allergy-item';
+        allergyItem.innerHTML = `
+            <div class="allergy-info">
+                <span class="allergy-name">${allergy.allergen_name}</span>
+                <span class="allergy-severity severity-${allergy.severity}">${allergy.severity}</span>
+            </div>
+            <button class="btn-delete" onclick="removeAllergy('${allergy.id}')">삭제</button>
+        `;
+        allergyList.appendChild(allergyItem);
+    });
+}
+
+// 알레르기 추가
+function addAllergy() {
+    const allergenSelect = document.getElementById('allergen-select');
+    const severitySelect = document.getElementById('severity-select');
+    
+    const allergenName = allergenSelect.value;
+    const severity = severitySelect.value;
+    
+    if (!allergenName) {
+        showNotification('알레르기를 선택해주세요.', 'error');
+        return;
+    }
+    
+    fetch('/add_allergy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            allergen_name: allergenName,
+            severity: severity
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadUserAllergies(); // 목록 새로고침
+            // 선택박스 초기화
+            allergenSelect.value = '';
+            severitySelect.value = '주의';
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('알레르기 추가 중 오류가 발생했습니다.', 'error');
+    });
+}
+
+// 알레르기 삭제
+function removeAllergy(allergyId) {
+    if (!confirm('정말로 이 알레르기를 삭제하시겠습니까?')) {
+        return;
+    }
+    
+    fetch('/remove_allergy', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            allergy_id: allergyId
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showNotification(data.message, 'success');
+            loadUserAllergies(); // 목록 새로고침
+        } else {
+            showNotification(data.error, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showNotification('알레르기 삭제 중 오류가 발생했습니다.', 'error');
+    });
+}
+
+// 분석 기록 로드
+function loadAnalysisHistory() {
+    fetch('/get_analysis_history', {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            displayAnalysisHistory(data.analysis_history);
+        } else {
+            console.error('분석 기록 로딩 실패:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// 분석 기록 표시
+function displayAnalysisHistory(history) {
+    const historyContainer = document.getElementById('analysis-history');
+    const noAnalysisMessage = document.getElementById('no-analysis-message');
+    
+    if (!historyContainer) return;
+    
+    historyContainer.innerHTML = '';
+    
+    if (history.length === 0) {
+        historyContainer.style.display = 'none';
+        noAnalysisMessage.style.display = 'block';
+        return;
+    }
+    
+    historyContainer.style.display = 'block';
+    noAnalysisMessage.style.display = 'none';
+    
+    history.forEach(analysis => {
+        const historyItem = document.createElement('div');
+        historyItem.className = 'history-item';
+        
+        // 날짜 포맷팅
+        const date = new Date(analysis.created_at);
+        const formattedDate = date.toLocaleString('ko-KR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        
+        // 결과 상태 클래스
+        const resultClass = analysis.is_safe ? 'safe' : 'danger';
+        const resultText = analysis.is_safe ? '안전' : '위험';
+        
+        historyItem.innerHTML = `
+            <div class="history-info">
+                <span class="history-date">${formattedDate}</span>
+                <span class="history-product">${analysis.product_name}</span>
+            </div>
+            <div class="history-result ${resultClass}">${resultText}</div>
+        `;
+        
+        historyContainer.appendChild(historyItem);
+    });
+}
+
+// 분석 결과 저장
+function saveAnalysisResult(data) {
+    // 로그인된 사용자만 저장
+    if (!document.querySelector('.user-menu')) {
+        return; // 로그인하지 않은 사용자는 저장하지 않음
+    }
+    
+    const productName = uploadedFilename ? uploadedFilename.replace(/\.(jpg|jpeg|png|gif)$/i, '') : '성분표';
+    const analysisResult = {
+        matched_allergens: data.analysis?.detected_allergens || [],
+        total_ingredients: data.analysis?.total_ingredients || 0,
+        confidence: data.analysis?.confidence || 0,
+        safe_ingredients: data.analysis?.safe_ingredients || []
+    };
+    
+    fetch('/save_analysis', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_name: productName,
+            analysis_result: analysisResult,
+            extracted_text: data.extracted_text || ''
+        })
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            console.log('분석 기록이 저장되었습니다:', result.message);
+        } else {
+            console.error('분석 기록 저장 실패:', result.error);
+        }
+    })
+    .catch(error => {
+        console.error('분석 기록 저장 중 오류:', error);
     });
 }
 

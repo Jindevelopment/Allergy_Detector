@@ -12,6 +12,9 @@ from src.services.auth.auth_service import register_user, check_login, user_exis
 from src.services.risk.risk_service import analyze_text
 from src.services.profile.profile_service import list_allergies, add_allergy, remove_allergy
 from src.services.report.report_service import save_report, get_recent_reports
+from src.database.clients.db_client import get_db
+from google.cloud import firestore
+from datetime import datetime
 
 app = Flask(__name__, 
             template_folder='../../../web/templates',
@@ -36,27 +39,68 @@ def home():
     user_name = session.get('user_name', '')
     return render_template('index.html', is_logged_in=is_logged_in, user_name=user_name)
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'GET':
+        return render_template('register.html')
+    
+    # POST 요청 처리
+    data = request.get_json()
+    username = data.get('username')
+    password = data.get('password')
+    email = data.get('email')
+    
+    if not username or not password or not email:
+        return jsonify({'error': '모든 필드를 입력해주세요'}), 400
+    
+    try:
+        # 사용자 등록 (email을 user_id로 사용)
+        result = register_user(email, password, username)
+        return jsonify({'success': True, 'message': '회원가입이 완료되었습니다!', 'user_id': result['user_id']})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @app.route('/login')
 def login():
     return render_template('login.html')
 
 @app.route('/login', methods=['POST'])
 def login_post():
-    email = request.form.get('email')
-    password = request.form.get('password')
+    # JSON 요청 처리
+    if request.is_json:
+        data = request.get_json()
+        email = data.get('email')
+        password = data.get('password')
+    else:
+        # Form 요청 처리
+        email = request.form.get('email')
+        password = request.form.get('password')
     
-    # 간단한 로그인 검증 (실제로는 데이터베이스에서 확인)
-    if email and password:
+    if not email or not password:
+        if request.is_json:
+            return jsonify({'error': '이메일과 비밀번호를 입력해주세요.'}), 400
+        else:
+            return render_template('login.html', error='이메일과 비밀번호를 확인해주세요.')
+    
+    try:
+        # 실제 데이터베이스에서 로그인 확인 (email을 user_id로 사용)
+        result = check_login(email, password)
+        
         # 세션에 사용자 정보 저장
-        session['user_id'] = email  # 실제로는 사용자 ID
-        session['user_name'] = email.split('@')[0]  # 이메일에서 이름 추출
+        session['user_id'] = result['user_id']
+        session['user_name'] = result['nickname']
         session['user_email'] = email
         
-        # 로그인 성공 시 메인 페이지로 리다이렉트
-        return redirect(url_for('home'))
-    else:
-        # 로그인 실패 시 에러 메시지와 함께 로그인 페이지로
-        return render_template('login.html', error='이메일과 비밀번호를 확인해주세요.')
+        if request.is_json:
+            return jsonify({'success': True, 'message': '로그인 성공!', 'user_id': result['user_id']})
+        else:
+            return redirect(url_for('home'))
+            
+    except Exception as e:
+        if request.is_json:
+            return jsonify({'error': str(e)}), 401
+        else:
+            return render_template('login.html', error=str(e))
 
 @app.route('/signup')
 def signup():
@@ -83,8 +127,14 @@ def signup_post():
     if not terms_agreed:
         return render_template('signup.html', error='이용약관에 동의해주세요.')
     
-    # 회원가입 성공 시 로그인 페이지로 리다이렉트
-    return redirect(url_for('login', success='회원가입이 완료되었습니다. 로그인해주세요.'))
+    try:
+        # 실제 데이터베이스에 사용자 등록
+        result = register_user(email, password, name)
+        
+        # 회원가입 성공 시 로그인 페이지로 리다이렉트
+        return redirect(url_for('login', success='회원가입이 완료되었습니다. 로그인해주세요.'))
+    except Exception as e:
+        return render_template('signup.html', error=str(e))
 
 @app.route('/logout')
 def logout():
@@ -94,15 +144,171 @@ def logout():
     session.pop('user_email', None)
     return redirect(url_for('home'))
 
+@app.route('/service')
+def service():
+    return render_template('service.html')
+
+@app.route('/features')
+def features():
+    return render_template('features.html')
+
+@app.route('/help')
+def help():
+    return render_template('help.html')
+
 @app.route('/mypage')
 def mypage():
     # 로그인 상태 확인
     if 'user_id' not in session:
         return redirect(url_for('login'))
     
+    user_id = session.get('user_id')
     user_name = session.get('user_name', '')
     user_email = session.get('user_email', '')
-    return render_template('mypage.html', user_name=user_name, user_email=user_email)
+    
+    # 실제 DB에서 데이터 가져오기
+    try:
+        # 사용자 알레르기 정보 가져오기
+        user_allergies = list_allergies(user_id)
+        
+        # 최근 분석 기록 가져오기
+        analysis_history = get_recent_reports(user_id, limit=3)
+        
+        # 분석 통계 계산
+        total_analyses = len(analysis_history)
+        danger_count = sum(1 for report in analysis_history if report.get('final_risk') in ['High', 'Medium'])
+        
+        # 알레르기 이름만 추출
+        allergy_names = [allergy.get('allergen_name', '') for allergy in user_allergies]
+        
+    except Exception as e:
+        print(f"DB 데이터 로딩 오류: {e}")
+        # 오류 시 기본값
+        user_allergies = []
+        analysis_history = []
+        total_analyses = 0
+        danger_count = 0
+        allergy_names = []
+    
+    return render_template('mypage.html', 
+                         user_name=user_name, 
+                         user_email=user_email)
+
+# 프로필 기능 라우트들
+@app.route('/add_allergy', methods=['POST'])
+def add_allergy_route():
+    if 'user_id' not in session:
+        return jsonify({'error': '로그인이 필요합니다'}), 401
+    
+    user_id = session.get('user_id')
+    data = request.get_json()
+    
+    allergen_name = data.get('allergen_name')
+    severity = data.get('severity', '주의')
+    
+    try:
+        result = add_allergy(user_id, allergen_name, severity)
+        return jsonify({'success': True, 'message': '알레르기가 추가되었습니다'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/remove_allergy', methods=['POST'])
+def remove_allergy_route():
+    if 'user_id' not in session:
+        return jsonify({'error': '로그인이 필요합니다'}), 401
+    
+    user_id = session.get('user_id')
+    data = request.get_json()
+    
+    allergy_id = data.get('allergy_id')
+    
+    try:
+        remove_allergy(user_id, allergy_id)
+        return jsonify({'success': True, 'message': '알레르기가 삭제되었습니다'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_allergies', methods=['GET'])
+def get_allergies_route():
+    if 'user_id' not in session:
+        return jsonify({'error': '로그인이 필요합니다'}), 401
+    
+    user_id = session.get('user_id')
+    
+    try:
+        allergies = list_allergies(user_id)
+        return jsonify({'success': True, 'allergies': allergies})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/save_analysis', methods=['POST'])
+def save_analysis_route():
+    if 'user_id' not in session:
+        return jsonify({'error': '로그인이 필요합니다'}), 401
+    
+    user_id = session.get('user_id')
+    data = request.get_json()
+    
+    product_name = data.get('product_name', '알 수 없는 제품')
+    analysis_result = data.get('analysis_result', {})
+    extracted_text = data.get('extracted_text', '')
+    
+    try:
+        # 분석 기록을 DB에 저장
+        db = get_db()
+        analysis_data = {
+            'user_id': user_id,
+            'product_name': product_name,
+            'extracted_text': extracted_text,
+            'analysis_result': analysis_result,
+            'created_at': datetime.utcnow(),
+            'matched_allergens': analysis_result.get('matched_allergens', []),
+            'total_ingredients': analysis_result.get('total_ingredients', 0),
+            'confidence': analysis_result.get('confidence', 0),
+            'is_safe': len(analysis_result.get('matched_allergens', [])) == 0
+        }
+        
+        # analyses 컬렉션에 저장
+        doc_ref = db.collection('analyses').add(analysis_data)
+        
+        return jsonify({'success': True, 'message': '분석 기록이 저장되었습니다', 'analysis_id': doc_ref[1].id})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/get_analysis_history', methods=['GET'])
+def get_analysis_history_route():
+    if 'user_id' not in session:
+        return jsonify({'error': '로그인이 필요합니다'}), 401
+    
+    user_id = session.get('user_id')
+    limit = request.args.get('limit', 10, type=int)
+    
+    try:
+        db = get_db()
+        
+        # 사용자의 분석 기록을 최신순으로 조회
+        analyses = db.collection('analyses')\
+                    .where('user_id', '==', user_id)\
+                    .order_by('created_at', direction=firestore.Query.DESCENDING)\
+                    .limit(limit)\
+                    .stream()
+        
+        analysis_history = []
+        for analysis in analyses:
+            data = analysis.to_dict()
+            analysis_history.append({
+                'id': analysis.id,
+                'product_name': data.get('product_name', '알 수 없는 제품'),
+                'created_at': data.get('created_at').isoformat() if data.get('created_at') else '',
+                'is_safe': data.get('is_safe', True),
+                'matched_allergens': data.get('matched_allergens', []),
+                'total_ingredients': data.get('total_ingredients', 0),
+                'confidence': data.get('confidence', 0)
+            })
+        
+        return jsonify({'success': True, 'analysis_history': analysis_history})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -242,4 +448,4 @@ def save_allergies():
     return jsonify({'success': True, 'message': '알레르기 정보가 저장되었습니다.'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=3001)

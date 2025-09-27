@@ -17,9 +17,9 @@
             </div>
             <nav class="nav">
                 <a href="{{ url_for('home') }}" class="nav-item">홈</a>
-                <a href="#" class="nav-item">서비스</a>
-                <a href="#" class="nav-item">기능</a>
-                <a href="#" class="nav-item">도움말</a>
+                <a href="{{ url_for('service') }}" class="nav-item">서비스</a>
+                <a href="{{ url_for('features') }}" class="nav-item">기능</a>
+                <a href="{{ url_for('help') }}" class="nav-item">도움말</a>
                 
                 <div class="user-menu">
                     <span class="user-name">{{ user_name }}님</span>
@@ -64,21 +64,41 @@
                 <div class="info-card">
                     <div class="card-header">
                         <h2 class="card-title">⚠️ 알레르기 설정</h2>
-                        <button class="btn-edit">수정</button>
                     </div>
                     <div class="card-content">
-                        <div class="allergy-status">
-                            <div class="status-item">
-                                <span class="status-label">설정된 알레르기</span>
-                                <span class="status-value">대두, 밀, 우유</span>
+                        <!-- 알레르기 추가 섹션 -->
+                        <div class="allergy-add-section">
+                            <h3>알레르기 추가</h3>
+                            <div class="add-allergy-form">
+                                <select id="allergen-select" class="form-select">
+                                    <option value="">알레르기 선택</option>
+                                    <option value="난류">난류</option>
+                                    <option value="우유">우유</option>
+                                    <option value="메밀">메밀</option>
+                                    <option value="땅콩">땅콩</option>
+                                    <option value="대두">대두</option>
+                                    <option value="밀">밀</option>
+                                    <option value="고등어">고등어</option>
+                                    <option value="게">게</option>
+                                    <option value="새우">새우</option>
+                                    <option value="돼지고기">돼지고기</option>
+                                    <option value="복숭아">복숭아</option>
+                                    <option value="토마토">토마토</option>
+                                </select>
+                                <select id="severity-select" class="form-select">
+                                    <option value="주의">주의</option>
+                                    <option value="심각">심각</option>
+                                    <option value="경미">경미</option>
+                                </select>
+                                <button onclick="addAllergy()" class="btn-primary">추가</button>
                             </div>
-                            <div class="status-item">
-                                <span class="status-label">분석 횟수</span>
-                                <span class="status-value">15회</span>
-                            </div>
-                            <div class="status-item">
-                                <span class="status-label">위험 감지</span>
-                                <span class="status-value danger">3회</span>
+                        </div>
+                        
+                        <!-- 현재 알레르기 목록 -->
+                        <div class="current-allergies-section">
+                            <h3>현재 알레르기</h3>
+                            <div id="user-allergy-list" class="allergy-list">
+                                <!-- JavaScript로 동적 생성 -->
                             </div>
                         </div>
                     </div>
@@ -91,28 +111,12 @@
                         <a href="#" class="btn-view-all">전체보기</a>
                     </div>
                     <div class="card-content">
-                        <div class="analysis-history">
-                            <div class="history-item">
-                                <div class="history-info">
-                                    <span class="history-date">2024.01.15 14:30</span>
-                                    <span class="history-product">오렌지 주스</span>
-                                </div>
-                                <div class="history-result safe">안전</div>
-                            </div>
-                            <div class="history-item">
-                                <div class="history-info">
-                                    <span class="history-date">2024.01.15 12:15</span>
-                                    <span class="history-product">초콜릿 쿠키</span>
-                                </div>
-                                <div class="history-result danger">위험</div>
-                            </div>
-                            <div class="history-item">
-                                <div class="history-info">
-                                    <span class="history-date">2024.01.14 18:45</span>
-                                    <span class="history-product">사과 주스</span>
-                                </div>
-                                <div class="history-result safe">안전</div>
-                            </div>
+                        <div id="analysis-history" class="analysis-history">
+                            <!-- JavaScript로 동적 생성 -->
+                        </div>
+                        <div id="no-analysis-message" class="no-analysis-message" style="display: none;">
+                            <p>아직 분석 기록이 없습니다.</p>
+                            <p>성분표를 업로드하여 첫 번째 분석을 시작해보세요!</p>
                         </div>
                     </div>
                 </div>

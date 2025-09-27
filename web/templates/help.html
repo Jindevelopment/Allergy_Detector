@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>도움말 - AI 알레르기 가이드</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <div class="logo">
+                <span class="logo-icon">🍽️</span>
+                <span class="logo-text">조시해eat</span>
+            </div>
+            <nav class="nav">
+                <a href="{{ url_for('home') }}" class="nav-item">홈</a>
+                <a href="{{ url_for('service') }}" class="nav-item">서비스</a>
+                <a href="{{ url_for('features') }}" class="nav-item">기능</a>
+                <a href="{{ url_for('help') }}" class="nav-item active">도움말</a>
+                
+                {% if session.user_id %}
+                    <div class="user-menu">
+                        <span class="user-name">{{ session.user_name }}님</span>
+                        <a href="{{ url_for('mypage') }}" class="nav-item">마이페이지</a>
+                        <a href="{{ url_for('logout') }}" class="btn-logout">로그아웃</a>
+                    </div>
+                {% else %}
+                    <div class="user-menu">
+                        <a href="{{ url_for('login') }}" class="nav-item">로그인</a>
+                        <a href="{{ url_for('signup') }}" class="nav-item">회원가입</a>
+                    </div>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- 메인 콘텐츠 -->
+    <main class="main-content">
+        <div class="container">
+            <!-- 도움말 헤더 -->
+            <section class="help-header">
+                <h1 class="page-title">❓ 도움말</h1>
+                <p class="page-subtitle">조시해eat 사용법과 자주 묻는 질문들</p>
+            </section>
+
+            <!-- 사용법 가이드 -->
+            <section class="help-section">
+                <h2 class="section-title">📖 사용법 가이드</h2>
+                
+                <div class="guide-step">
+                    <h3 class="guide-title">1. 회원가입 및 로그인</h3>
+                    <p class="guide-description">
+                        더 정확한 분석 결과를 위해 회원가입을 권장합니다. 
+                        회원가입 후 개인 알레르기 프로필을 설정할 수 있습니다.
+                    </p>
+                    <div class="guide-tip">
+                        💡 <strong>팁:</strong> 알레르기 프로필을 설정하면 맞춤형 분석 결과를 받을 수 있습니다.
+                    </div>
+                </div>
+
+                <div class="guide-step">
+                    <h3 class="guide-title">2. 성분표 촬영 또는 업로드</h3>
+                    <p class="guide-description">
+                        식품의 성분표를 카메라로 촬영하거나 갤러리에서 이미지를 선택합니다.
+                    </p>
+                    <ul class="guide-list">
+                        <li>성분표가 선명하게 보이도록 촬영하세요</li>
+                        <li>빛이 충분한 곳에서 촬영하세요</li>
+                        <li>성분표가 완전히 포함되도록 촬영하세요</li>
+                    </ul>
+                </div>
+
+                <div class="guide-step">
+                    <h3 class="guide-title">3. 분석 결과 확인</h3>
+                    <p class="guide-description">
+                        AI가 성분을 분석하여 알레르기 위험도를 평가합니다.
+                    </p>
+                    <div class="result-guide">
+                        <div class="result-item safe">
+                            <span class="result-icon">🟢</span>
+                            <span class="result-text">안전: 알레르기 성분이 발견되지 않음</span>
+                        </div>
+                        <div class="result-item danger">
+                            <span class="result-icon">🔴</span>
+                            <span class="result-text">위험: 알레르기 성분이 발견됨</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 자주 묻는 질문 -->
+            <section class="help-section">
+                <h2 class="section-title">❓ 자주 묻는 질문</h2>
+                
+                <div class="faq-item">
+                    <h3 class="faq-question">Q. 어떤 이미지 포맷을 지원하나요?</h3>
+                    <p class="faq-answer">
+                        JPG, JPEG, PNG, GIF 형식의 이미지를 지원합니다. 
+                        최적의 분석을 위해 고해상도 이미지를 권장합니다.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Q. 분석 정확도는 어느 정도인가요?</h3>
+                    <p class="faq-answer">
+                        OCR 기술과 AI 알고리즘을 통해 높은 정확도를 제공하지만, 
+                        완벽하지 않을 수 있습니다. 중요한 알레르기가 있는 경우 
+                        반드시 전문의와 상담하시기 바랍니다.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Q. 개인정보는 안전한가요?</h3>
+                    <p class="faq-answer">
+                        네, 사용자의 개인정보와 분석 기록은 안전하게 보호됩니다. 
+                        업로드된 이미지는 분석 후 자동으로 삭제됩니다.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Q. 어떤 알레르기 성분을 감지할 수 있나요?</h3>
+                    <p class="faq-answer">
+                        난류, 우유, 메밀, 땅콩, 대두, 밀, 고등어, 게, 새우, 
+                        돼지고기, 복숭아, 토마토 등 12가지 주요 알레르기 성분을 감지합니다.
+                    </p>
+                </div>
+
+                <div class="faq-item">
+                    <h3 class="faq-question">Q. 분석 기록은 어디서 확인할 수 있나요?</h3>
+                    <p class="faq-answer">
+                        로그인 후 마이페이지에서 모든 분석 기록을 확인할 수 있습니다. 
+                        날짜, 제품명, 안전/위험 상태를 한눈에 볼 수 있습니다.
+                    </p>
+                </div>
+            </section>
+
+            <!-- 문제 해결 -->
+            <section class="help-section">
+                <h2 class="section-title">🔧 문제 해결</h2>
+                
+                <div class="troubleshooting">
+                    <h3 class="trouble-title">분석이 제대로 되지 않아요</h3>
+                    <ul class="trouble-list">
+                        <li>성분표가 선명하게 보이는지 확인하세요</li>
+                        <li>이미지가 너무 어둡거나 흐릿하지 않은지 확인하세요</li>
+                        <li>성분표 전체가 이미지에 포함되어 있는지 확인하세요</li>
+                        <li>다른 각도나 거리에서 다시 촬영해보세요</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting">
+                    <h3 class="trouble-title">로그인이 안 돼요</h3>
+                    <ul class="trouble-list">
+                        <li>이메일과 비밀번호를 정확히 입력했는지 확인하세요</li>
+                        <li>회원가입을 하지 않았다면 먼저 회원가입을 진행하세요</li>
+                        <li>비밀번호를 잊으셨다면 회원가입 페이지에서 새로 가입하세요</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- 연락처 -->
+            <section class="help-section">
+                <h2 class="section-title">📞 문의하기</h2>
+                <div class="contact-info">
+                    <p class="contact-description">
+                        추가적인 도움이 필요하시거나 버그를 발견하셨나요? 
+                        언제든지 문의해주세요.
+                    </p>
+                    <div class="contact-methods">
+                        <div class="contact-item">
+                            <span class="contact-icon">📧</span>
+                            <span class="contact-text">이메일: support@joshihaeat.com</span>
+                        </div>
+                        <div class="contact-item">
+                            <span class="contact-icon">💬</span>
+                            <span class="contact-text">카카오톡: @조시해eat</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2024 조시해eat. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
