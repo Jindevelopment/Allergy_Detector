@@ -6,6 +6,8 @@
     <title>AI 알레르기 가이드</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+    <!-- QuaggaJS for barcode scanning -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/quagga/0.12.1/quagga.min.js"></script>
 </head>
 <body>
     <!-- 헤더 -->
@@ -56,6 +58,11 @@
                     <div class="hero-feature-icon yellow-bg">📷</div>
                     <h3 class="hero-feature-title">간편한 촬영</h3>
                     <p class="hero-feature-desc">성분표를 촬영하기만 하면 끝</p>
+                </div>
+                <div class="hero-feature-card">
+                    <div class="hero-feature-icon orange-bg">📱</div>
+                    <h3 class="hero-feature-title">바코드 스캔</h3>
+                    <p class="hero-feature-desc">바코드로 빠른 제품 분석</p>
                 </div>
                 <div class="hero-feature-card">
                     <div class="hero-feature-icon green-bg">🤖</div>
@@ -172,6 +179,10 @@
                     <span class="btn-icon">📷</span>
                     카메라 촬영
                 </button>
+                <button class="btn-barcode" onclick="openBarcodeScanner()">
+                    <span class="btn-icon">📱</span>
+                    바코드로 분석
+                </button>
             </div>
             
             <div class="uploaded-image" id="uploaded-image" style="display: none;">
@@ -188,6 +199,10 @@
                 <div class="result-header">
                     <h3>✅ 분석 완료!</h3>
                     <p class="result-subtitle">성분표 분석이 완료되었습니다</p>
+                    <div class="analysis-method" id="analysis-method">
+                        <span class="method-icon">📷</span>
+                        <span class="method-text">OCR 이미지 분석</span>
+                    </div>
                 </div>
                 
                 <div class="allergy-detected-section" id="allergy-detected-section">
@@ -357,12 +372,17 @@
                     </div>
                     <div class="usage-step">
                         <div class="step-icon-modal blue-step">📷</div>
-                        <h3>2단계: 성분표 촬영</h3>
-                        <p>식품 포장의 성분표를 선명하게<br>촬영하거나 업로드하세요</p>
+                        <h3>2단계: 분석 방법 선택</h3>
+                        <p>성분표 촬영 또는 바코드 스캔 중<br>원하는 방법을 선택하세요</p>
+                    </div>
+                    <div class="usage-step">
+                        <div class="step-icon-modal orange-step">📱</div>
+                        <h3>3단계: 바코드 스캔</h3>
+                        <p>제품 바코드를 카메라에 비춰<br>자동으로 인식시키세요</p>
                     </div>
                     <div class="usage-step">
                         <div class="step-icon-modal green-step">🚦</div>
-                        <h3>3단계: 결과 확인</h3>
+                        <h3>4단계: 결과 확인</h3>
                         <p>AI가 분석한 위험도를<br>신호등 방식으로 확인하세요</p>
                     </div>
                 </div>
@@ -370,12 +390,16 @@
                 <div class="shooting-tips">
                     <div class="tips-header">
                         <span class="tips-icon">💡</span>
-                        <h3>촬영 팁</h3>
+                        <h3>사용 팁</h3>
                     </div>
                     <div class="tips-grid">
                         <div class="tip-item">
-                            <span class="check-icon">✓</span>
+                            <span class="check-icon">📷</span>
                             <span>성분표 전체가 보이도록 촬영</span>
+                        </div>
+                        <div class="tip-item">
+                            <span class="check-icon">📱</span>
+                            <span>바코드를 카메라에 정확히 비춰주세요</span>
                         </div>
                         <div class="tip-item">
                             <span class="check-icon">✓</span>
@@ -388,6 +412,10 @@
                         <div class="tip-item">
                             <span class="check-icon">✓</span>
                             <span>글자가 잘 보이는 각도</span>
+                        </div>
+                        <div class="tip-item">
+                            <span class="check-icon">✓</span>
+                            <span>바코드가 손상되지 않았는지 확인</span>
                         </div>
                     </div>
                 </div>

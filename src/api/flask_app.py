@@ -16,6 +16,7 @@ try:
     from services.profile_service import list_allergies, add_allergy, remove_allergy
     from services.report_service import save_report, get_recent_reports
     from services.risk_service import analyze_text
+    from services.barcode_service import barcode_service
     from services.db_client import init_firestore
     BACKEND_AVAILABLE = True
 except Exception as e:
@@ -548,6 +549,81 @@ def get_user_reports():
         return jsonify({'success': True, 'reports': reports})
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/analyze-barcode', methods=['POST'])
+def analyze_barcode():
+    """바코드 분석 API"""
+    try:
+        data = request.get_json()
+        barcode = data.get('barcode')
+        user_allergies = data.get('user_allergies', [])
+        
+        if not barcode:
+            return jsonify({'error': '바코드 번호가 필요합니다'}), 400
+        
+        print(f"바코드 분석 요청: {barcode}")
+        print(f"사용자 알레르기: {user_allergies}")
+        
+        # 바코드 서비스를 통한 분석
+        if BACKEND_AVAILABLE:
+            try:
+                analysis_result = barcode_service.analyze_barcode_allergies(barcode, user_allergies)
+                
+                # 사용자 알레르기와 매칭된 성분이 있는 경우 보고서 저장
+                user_id = session.get('user_id')
+                user_specific_allergens = analysis_result['analysis'].get('user_specific_allergens', [])
+                
+                if user_specific_allergens and user_id:
+                    try:
+                        report_id = save_report(
+                            user_id=user_id,
+                            food_name=analysis_result['barcode_info'].get('product_name', f'바코드 {barcode}'),
+                            detected_allergens=user_specific_allergens,
+                            symptom_check=['호흡기', '피부', '소화기'],
+                            total_score=analysis_result['analysis'].get('risk_score', 0),
+                            final_risk=analysis_result['analysis'].get('allergy_risk', 'very_low')
+                        )
+                        analysis_result['analysis']['report_id'] = report_id
+                        print(f"바코드 분석 보고서 저장 완료: {report_id}")
+                    except Exception as e:
+                        print(f"바코드 분석 보고서 저장 오류: {e}")
+                
+                return jsonify({
+                    'success': True,
+                    **analysis_result
+                })
+                
+            except Exception as e:
+                print(f"바코드 서비스 오류: {e}")
+                return jsonify({'error': f'바코드 분석 중 오류가 발생했습니다: {str(e)}'}), 500
+        else:
+            # 백엔드 서비스가 사용 불가능한 경우 기본 응답
+            return jsonify({
+                'success': True,
+                'barcode_info': {
+                    'product_name': f'바코드 {barcode} 제품',
+                    'ingredients': ['성분 정보 없음'],
+                    'allergens': [],
+                    'brand': '브랜드 정보 없음',
+                    'category': '카테고리 정보 없음',
+                    'note': '백엔드 서비스가 사용 불가능합니다.'
+                },
+                'analysis': {
+                    'detected_allergens': [],
+                    'user_specific_allergens': [],
+                    'safe_ingredients': ['성분 정보 없음'],
+                    'total_ingredients_found': 0,
+                    'user_matched_count': 0,
+                    'risk_score': 0,
+                    'allergy_risk': 'very_low',
+                    'risk_description': '백엔드 서비스가 사용 불가능합니다.',
+                    'recommendations': ['백엔드 서비스가 사용 불가능합니다. 관리자에게 문의하세요.']
+                }
+            })
+            
+    except Exception as e:
+        print(f"바코드 분석 API 오류: {str(e)}")
+        return jsonify({'error': f'바코드 분석 중 오류가 발생했습니다: {str(e)}'}), 500
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=3000)

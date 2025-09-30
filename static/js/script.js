@@ -265,6 +265,14 @@ function getAllergyKeywords(allergyName) {
 function displayAnalysisResult(data) {
     const resultDiv = document.getElementById('analysis-result');
     
+    // 분석 방법 표시 (OCR)
+    const analysisMethod = document.getElementById('analysis-method');
+    analysisMethod.innerHTML = `
+        <span class="method-icon">📷</span>
+        <span class="method-text">OCR 이미지 분석</span>
+    `;
+    analysisMethod.className = 'analysis-method';
+    
     // 1. 감지된 알레르기 성분 섹션 (모든 감지된 알레르기)
     const detectedAllergens = data.analysis.detected_allergens || [];
     const allergyDetectedSection = document.getElementById('allergy-detected-section');
@@ -1103,4 +1111,515 @@ function closeCameraModal() {
         // 모달 제거
         modal.remove();
     }
+}
+
+// 바코드 스캐너 열기
+function openBarcodeScanner() {
+    // 바코드 스캐너 모달 HTML 생성
+    const modalHTML = `
+        <div id="barcode-modal" class="barcode-modal-overlay">
+            <div class="barcode-modal-content">
+                <div class="barcode-header">
+                    <h3>바코드 스캔</h3>
+                    <button class="barcode-close" onclick="closeBarcodeModal()">&times;</button>
+                </div>
+                <div class="barcode-body">
+                    <div id="barcode-scanner"></div>
+                    <div class="barcode-instructions">
+                        <p>📱 바코드를 카메라에 비춰주세요</p>
+                        <p>초록색 영역에 바코드가 들어가도록 조정하세요</p>
+                        <p>충분한 조명과 안정적인 거리를 유지하세요</p>
+                        <p>자동으로 인식됩니다</p>
+                    </div>
+                    <div class="barcode-controls">
+                        <button class="btn-manual-input" onclick="showManualBarcodeInput()">수동 입력</button>
+                        <button class="btn-cancel" onclick="closeBarcodeModal()">취소</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    // 모달을 body에 추가
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+    
+    // 바코드 스캐너 스타일 추가
+    addBarcodeModalStyles();
+    
+    // QuaggaJS 초기화
+    initializeBarcodeScanner();
+}
+
+// 바코드 스캐너 초기화
+function initializeBarcodeScanner() {
+    Quagga.init({
+        inputStream: {
+            name: "Live",
+            type: "LiveStream",
+            target: document.querySelector('#barcode-scanner'),
+            constraints: {
+                width: 640,
+                height: 480,
+                facingMode: "environment", // 후면 카메라 사용
+                aspectRatio: { min: 1, max: 2 }
+            },
+            area: { // 스캔 영역 설정
+                top: "20%",
+                right: "10%",
+                left: "10%",
+                bottom: "20%"
+            },
+            singleChannel: false // 컬러 스캔
+        },
+        locator: {
+            patchSize: "medium",
+            halfSample: true
+        },
+        numOfWorkers: 2, // 워커 수 증가
+        frequency: 10, // 스캔 빈도 증가
+        decoder: {
+            readers: [
+                "code_128_reader",
+                "ean_reader",
+                "ean_8_reader",
+                "code_39_reader",
+                "code_39_vin_reader",
+                "codabar_reader",
+                "upc_reader",
+                "upc_e_reader",
+                "i2of5_reader"
+            ],
+            debug: {
+                drawBoundingBox: true,
+                showFrequency: true,
+                drawScanline: true,
+                showPattern: true
+            }
+        },
+        locate: true,
+        locate: true
+    }, function(err) {
+        if (err) {
+            console.error('바코드 스캐너 초기화 오류:', err);
+            showNotification('바코드 스캐너를 초기화할 수 없습니다.', 'error');
+            return;
+        }
+        console.log("바코드 스캐너 초기화 완료");
+        Quagga.start();
+        
+        // 스캔 가이드 표시
+        showScanGuide();
+    });
+
+    // 바코드 인식 이벤트 리스너 (중복 방지)
+    let isProcessing = false;
+    Quagga.onDetected(function(data) {
+        if (isProcessing) return;
+        isProcessing = true;
+        
+        console.log('바코드 인식됨:', data);
+        const barcode = data.codeResult.code;
+        
+        // 신뢰도 확인
+        if (data.codeResult.decodedCodes && data.codeResult.decodedCodes.length > 0) {
+            const confidence = data.codeResult.decodedCodes[0].error;
+            console.log('바코드 신뢰도:', confidence);
+            
+            if (confidence > 0.1) { // 신뢰도가 낮으면 재시도
+                console.log('신뢰도가 낮아 재시도합니다.');
+                isProcessing = false;
+                return;
+            }
+        }
+        
+        // 스캐너 정지
+        Quagga.stop();
+        
+        // 바코드 분석 요청
+        analyzeBarcode(barcode);
+        
+        // 모달 닫기
+        closeBarcodeModal();
+        
+        showNotification('바코드가 인식되었습니다!', 'success');
+        
+        // 처리 완료 후 플래그 리셋
+        setTimeout(() => {
+            isProcessing = false;
+        }, 2000);
+    });
+}
+
+// 스캔 가이드 표시
+function showScanGuide() {
+    const scanner = document.querySelector('#barcode-scanner');
+    if (scanner) {
+        scanner.style.position = 'relative';
+        
+        // 스캔 가이드 오버레이 추가
+        const guideOverlay = document.createElement('div');
+        guideOverlay.id = 'scan-guide-overlay';
+        guideOverlay.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 10;
+        `;
+        
+        // 스캔 영역 표시
+        const scanArea = document.createElement('div');
+        scanArea.style.cssText = `
+            position: absolute;
+            top: 20%;
+            left: 10%;
+            width: 80%;
+            height: 60%;
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            background: rgba(0, 255, 0, 0.1);
+            animation: pulse 2s infinite;
+        `;
+        
+        // 스캔 라인 애니메이션
+        const scanLine = document.createElement('div');
+        scanLine.style.cssText = `
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00ff00, transparent);
+            animation: scanLine 2s linear infinite;
+        `;
+        
+        scanArea.appendChild(scanLine);
+        guideOverlay.appendChild(scanArea);
+        scanner.appendChild(guideOverlay);
+        
+        // 애니메이션 CSS 추가
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes pulse {
+                0%, 100% { opacity: 0.3; }
+                50% { opacity: 0.8; }
+            }
+            @keyframes scanLine {
+                0% { transform: translateY(0); }
+                100% { transform: translateY(100%); }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+}
+
+// 바코드 분석
+function analyzeBarcode(barcode) {
+    console.log('바코드 분석 시작:', barcode);
+    
+    // 로딩 오버레이 표시
+    showLoadingOverlay();
+    
+    // 서버로 바코드 전송 및 분석 요청
+    fetch('/analyze-barcode', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            barcode: barcode,
+            user_allergies: getUserSelectedAllergies()
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        hideLoadingOverlay();
+        if (data.success) {
+            displayBarcodeAnalysisResult(data);
+        } else {
+            showNotification('바코드 분석 중 오류가 발생했습니다: ' + (data.error || '알 수 없는 오류'), 'error');
+        }
+    })
+    .catch(error => {
+        hideLoadingOverlay();
+        console.error('Error:', error);
+        showNotification('바코드 분석 중 오류가 발생했습니다.', 'error');
+    });
+}
+
+// 바코드 분석 결과 표시
+function displayBarcodeAnalysisResult(data) {
+    const resultDiv = document.getElementById('analysis-result');
+    
+    // 분석 방법 표시 (바코드)
+    const analysisMethod = document.getElementById('analysis-method');
+    analysisMethod.innerHTML = `
+        <span class="method-icon">📱</span>
+        <span class="method-text">바코드 분석</span>
+    `;
+    analysisMethod.className = 'analysis-method barcode-method';
+    
+    // 바코드 정보 표시
+    const barcodeInfo = data.barcode_info || {};
+    const productName = barcodeInfo.product_name || '제품명 정보 없음';
+    const ingredients = barcodeInfo.ingredients || [];
+    
+    // 분석 결과 업데이트
+    const detectedAllergens = data.analysis.detected_allergens || [];
+    const userSpecificAllergens = data.analysis.user_specific_allergens || [];
+    
+    // 감지된 알레르기 성분 섹션
+    const allergyDetectedSection = document.getElementById('allergy-detected-section');
+    if (detectedAllergens.length > 0) {
+        const allergyDetectedList = document.getElementById('allergy-detected-list');
+        allergyDetectedList.innerHTML = '';
+        
+        detectedAllergens.forEach(allergen => {
+            const allergyItem = document.createElement('div');
+            allergyItem.className = 'allergy-item';
+            allergyItem.innerHTML = `${allergen}`;
+            allergyDetectedList.appendChild(allergyItem);
+        });
+        
+        allergyDetectedSection.style.display = 'block';
+    } else {
+        const allergyDetectedList = document.getElementById('allergy-detected-list');
+        allergyDetectedList.innerHTML = '<div class="no-allergy-message">✅ 감지된 알레르기 성분이 없습니다</div>';
+        allergyDetectedSection.style.display = 'block';
+    }
+    
+    // 사용자 알레르기 성분 섹션
+    const userAllergyWarningSection = document.getElementById('user-allergy-warning-section');
+    if (userSpecificAllergens.length > 0) {
+        const userAllergyList = document.getElementById('user-allergy-list');
+        userAllergyList.innerHTML = '';
+        
+        userSpecificAllergens.forEach(allergen => {
+            const allergyItem = document.createElement('div');
+            allergyItem.className = 'allergy-item high-risk-item';
+            allergyItem.innerHTML = `🚨 ${allergen}`;
+            userAllergyList.appendChild(allergyItem);
+        });
+        
+        userAllergyWarningSection.style.display = 'block';
+    } else {
+        const userAllergyList = document.getElementById('user-allergy-list');
+        userAllergyList.innerHTML = '<div class="no-allergy-message">✅ 사용자 알레르기 성분이 감지되지 않았습니다</div>';
+        userAllergyWarningSection.style.display = 'block';
+    }
+    
+    // 안전한 성분 섹션 숨기기 (바코드 분석에서는 제외)
+    const safeIngredientsSection = document.getElementById('safe-ingredients-section');
+    if (safeIngredientsSection) {
+        safeIngredientsSection.style.display = 'none';
+    }
+    
+    // 메트릭 업데이트
+    const totalIngredients = data.analysis.total_ingredients_found || 0;
+    document.getElementById('total-ingredients').textContent = totalIngredients + '개';
+    
+    // 위험도 점수 표시 및 색상 설정
+    const riskScore = data.analysis.risk_score || 0;
+    const riskScoreElement = document.getElementById('risk-score');
+    riskScoreElement.textContent = riskScore;
+    
+    // 점수에 따른 색상 설정
+    if (riskScore >= 7) {
+        riskScoreElement.className = 'metric-value high-risk';
+    } else if (riskScore >= 5) {
+        riskScoreElement.className = 'metric-value medium-risk';
+    } else if (riskScore >= 3) {
+        riskScoreElement.className = 'metric-value low-risk';
+    } else {
+        riskScoreElement.className = 'metric-value';
+    }
+    
+    // 위험도 레벨 표시 및 색상 설정
+    const riskValue = document.getElementById('allergy-risk');
+    const riskLevel = data.analysis.allergy_risk || 'very_low';
+    
+    // 위험도 레벨을 한국어로 변환
+    const riskLevelMap = {
+        'very_low': { text: '🟢 매우 낮음', class: 'metric-value low-risk' },
+        'low': { text: '🟡 낮음', class: 'metric-value low-risk' },
+        'medium': { text: '🟠 보통', class: 'metric-value medium-risk' },
+        'high': { text: '🔴 높음', class: 'metric-value high-risk' },
+        'very_high': { text: '🚨 매우 높음', class: 'metric-value high-risk' }
+    };
+    
+    const riskInfo = riskLevelMap[riskLevel] || riskLevelMap['very_low'];
+    riskValue.textContent = riskInfo.text;
+    riskValue.className = riskInfo.class;
+    
+    // 결과 표시
+    resultDiv.style.display = 'block';
+    
+    // 결과로 스크롤
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
+    
+    // 성공 알림
+    showNotification(`바코드 분석이 완료되었습니다! (제품: ${productName})`, 'success');
+}
+
+// 수동 바코드 입력 모달 표시
+function showManualBarcodeInput() {
+    const barcode = prompt('바코드 번호를 입력하세요:');
+    if (barcode && barcode.trim()) {
+        closeBarcodeModal();
+        analyzeBarcode(barcode.trim());
+    }
+}
+
+// 바코드 모달 닫기
+function closeBarcodeModal() {
+    const modal = document.getElementById('barcode-modal');
+    if (modal) {
+        // QuaggaJS 정지
+        if (Quagga) {
+            Quagga.stop();
+        }
+        
+        // 스캔 가이드 오버레이 제거
+        const guideOverlay = document.getElementById('scan-guide-overlay');
+        if (guideOverlay) {
+            guideOverlay.remove();
+        }
+        
+        // 모달 제거
+        modal.remove();
+    }
+}
+
+// 바코드 모달 스타일 추가
+function addBarcodeModalStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .barcode-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .barcode-modal-content {
+            background: white;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            overflow: hidden;
+        }
+        
+        .barcode-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .barcode-header h3 {
+            margin: 0;
+            color: #333;
+        }
+        
+        .barcode-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .barcode-body {
+            padding: 20px;
+            text-align: center;
+        }
+        
+        #barcode-scanner {
+            width: 100%;
+            max-width: 500px;
+            height: 400px;
+            margin: 0 auto 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #f5f5f5;
+            border: 2px solid #ddd;
+        }
+        
+        .barcode-instructions {
+            margin-bottom: 20px;
+            color: #666;
+        }
+        
+        .barcode-instructions p {
+            margin: 5px 0;
+            font-size: 14px;
+        }
+        
+        .barcode-controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+        
+        .btn-manual-input,
+        .btn-cancel {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-manual-input {
+            background: #FF9800;
+            color: white;
+        }
+        
+        .btn-manual-input:hover {
+            background: #F57C00;
+            transform: translateY(-2px);
+        }
+        
+        .btn-cancel {
+            background: #f44336;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #da190b;
+            transform: translateY(-2px);
+        }
+        
+        @media (max-width: 480px) {
+            .barcode-modal-content {
+                width: 95%;
+                margin: 10px;
+            }
+            
+            #barcode-scanner {
+                height: 250px;
+            }
+            
+            .barcode-controls {
+                flex-direction: column;
+            }
+            
+            .btn-manual-input,
+            .btn-cancel {
+                width: 100%;
+            }
+        }
+    `;
+    document.head.appendChild(style);
 }

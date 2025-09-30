@@ -446,6 +446,10 @@ body {
     background: #ff4d4f;
 }
 
+.orange-bg {
+    background: #ff9800;
+}
+
 .hero-feature-title {
     font-size: 18px;
     font-weight: bold;
@@ -1165,6 +1169,10 @@ body {
     background: #52c41a;
 }
 
+.orange-step {
+    background: #ff9800;
+}
+
 .usage-step h3 {
     font-size: 16px;
     font-weight: bold;
@@ -1408,7 +1416,8 @@ body {
 }
 
 .btn-file-select,
-.btn-camera {
+.btn-camera,
+.btn-barcode {
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1426,7 +1435,8 @@ body {
 }
 
 .btn-file-select:hover,
-.btn-camera:hover {
+.btn-camera:hover,
+.btn-barcode:hover {
     border-color: #667eea;
     background: #f8f9ff;
     transform: translateY(-2px);
@@ -1434,7 +1444,8 @@ body {
 }
 
 .btn-file-select:active,
-.btn-camera:active {
+.btn-camera:active,
+.btn-barcode:active {
     transform: translateY(0);
 }
 
@@ -1460,6 +1471,45 @@ body {
     border-color: #2196F3;
     background: #e3f2fd;
     box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+}
+
+.btn-barcode {
+    border-color: #FF9800;
+}
+
+.btn-barcode:hover {
+    border-color: #FF9800;
+    background: #fff3e0;
+    box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+}
+
+/* 분석 방법 표시 스타일 */
+.analysis-method {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+    padding: 8px 16px;
+    background: #f0f8ff;
+    border: 1px solid #1890ff;
+    border-radius: 20px;
+    font-size: 14px;
+    color: #1890ff;
+    font-weight: 500;
+}
+
+.method-icon {
+    font-size: 16px;
+}
+
+.method-text {
+    font-size: 14px;
+}
+
+.analysis-method.barcode-method {
+    background: #fff3e0;
+    border-color: #FF9800;
+    color: #FF9800;
 }
 
 /* 업로드된 이미지 스타일 */

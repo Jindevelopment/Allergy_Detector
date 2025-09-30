@@ -49,7 +49,6 @@ Allergy_Detector/
 
 ### 1. 가상환경 활성화
 ```bash
-cd "/Users/oseli/Desktop/Cursor AI/Allergy_Detector"
 source venv/bin/activate
 ```
 
