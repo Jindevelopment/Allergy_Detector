@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>마이페이지 - AI 알레르기 가이드</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@200;300;400;500;700&family=Inter:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="container">
+            <a href="{{ url_for('home') }}" class="logo">
+                <span class="logo-icon">🍽️</span>
+                <span class="logo-text">조심해eat!</span>
+            </a>
+            <nav class="nav">
+                <a href="{{ url_for('home') }}" class="nav-item">홈</a>
+                <a href="#" class="nav-item">서비스</a>
+                <a href="#" class="nav-item">기능</a>
+                <a href="#" class="nav-item">도움말</a>
+                
+                <div class="user-menu">
+                    <span class="user-name">{{ user_name }}님</span>
+                    <a href="{{ url_for('mypage') }}" class="nav-item active">마이페이지</a>
+                    <a href="{{ url_for('logout') }}" class="btn-logout">로그아웃</a>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- 마이페이지 메인 콘텐츠 -->
+    <main class="mypage-main">
+        <div class="container">
+            <div class="mypage-header">
+                <h1 class="mypage-title">마이페이지</h1>
+                <p class="mypage-subtitle">{{ user_name }}님의 개인 정보와 알레르기 설정을 관리하세요</p>
+            </div>
+
+            <div class="mypage-content">
+                <!-- 사용자 정보 카드 -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h2 class="card-title">👤 사용자 정보</h2>
+                    </div>
+                    <div class="card-content">
+                        <div class="info-item">
+                            <span class="info-label">이름</span>
+                            <span class="info-value">{{ user_name }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">이메일</span>
+                            <span class="info-value">{{ user_email }}</span>
+                        </div>
+                        <div class="info-item">
+                            <span class="info-label">가입일</span>
+                            <span class="info-value">{{ user_created_at }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 알레르기 설정 카드 -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h2 class="card-title">⚠️ 알레르기 설정</h2>
+                        <button class="btn-edit" onclick="openAllergySettings()">수정</button>
+                    </div>
+                    <div class="card-content">
+                        <div class="allergy-status">
+                            <div class="status-item">
+                                <span class="status-label">설정된 알레르기</span>
+                                <span class="status-value">
+                                    {% if allergy_names %}
+                                        {{ allergy_names|join(', ') }}
+                                    {% else %}
+                                        설정된 알레르기가 없습니다
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">분석 횟수</span>
+                                <span class="status-value">{{ recent_reports|length }}회</span>
+                            </div>
+                            <div class="status-item">
+                                <span class="status-label">위험 감지</span>
+                                <span class="status-value danger">
+                                    {% set danger_count = recent_reports|selectattr('final_risk', 'in', ['high', 'very_high'])|list|length %}
+                                    {{ danger_count }}회
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 최근 분석 기록 카드 -->
+                <div class="info-card">
+                    <div class="card-header">
+                        <h2 class="card-title">📊 최근 분석 기록</h2>
+                        <a href="#" class="btn-view-all">전체보기</a>
+                    </div>
+                    <div class="card-content">
+                        <div class="analysis-history">
+                            {% if recent_reports %}
+                                {% for report in recent_reports %}
+                                <div class="history-item">
+                                    <div class="history-info">
+                                        <span class="history-date">{{ report.created_at.strftime('%Y.%m.%d %H:%M') if report.created_at else '날짜 없음' }}</span>
+                                        <span class="history-product">{{ report.food_name or '제품명 없음' }}</span>
+                                    </div>
+                                    <div class="history-result {% if report.final_risk in ['high', 'very_high'] %}danger{% else %}safe{% endif %}">
+                                        {% if report.final_risk in ['high', 'very_high'] %}위험{% else %}안전{% endif %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            {% else %}
+                                <div class="no-history-message">
+                                    <p>아직 분석 기록이 없습니다.</p>
+                                    <p>첫 번째 분석을 시작해보세요!</p>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 액션 버튼들 -->
+                <div class="action-buttons">
+                    <a href="{{ url_for('home') }}" class="btn-primary">새로운 분석하기</a>
+                    <button class="btn-secondary" onclick="openAllergySettings()">알레르기 설정 변경</button>
+                    <button class="btn-outline">계정 설정</button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 알레르기 설정 모달 -->
+    <div id="allergy-settings-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">⚠️ 알레르기 설정</h2>
+                <button class="modal-close" onclick="closeAllergySettings()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">본인에게 해당하는 알레르기 성분을 선택해주세요.</p>
+                
+                <!-- 알레르기 선택 영역 -->
+                <div class="allergy-selection">
+                    <div class="allergy-category">
+                        <h3>주요 알레르기 성분</h3>
+                        <div class="allergy-grid">
+                            <div class="allergy-item" data-allergy="난류" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🥚</span>
+                                <span class="allergy-name">난류</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="우유" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🥛</span>
+                                <span class="allergy-name">우유</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="메밀" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🌾</span>
+                                <span class="allergy-name">메밀</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="땅콩" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🥜</span>
+                                <span class="allergy-name">땅콩</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="대두" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🫘</span>
+                                <span class="allergy-name">대두</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="밀" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🌾</span>
+                                <span class="allergy-name">밀</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="고등어" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🐟</span>
+                                <span class="allergy-name">고등어</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="게" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🦀</span>
+                                <span class="allergy-name">게</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="새우" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🦐</span>
+                                <span class="allergy-name">새우</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="돼지고기" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🐷</span>
+                                <span class="allergy-name">돼지고기</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="복숭아" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🍑</span>
+                                <span class="allergy-name">복숭아</span>
+                            </div>
+                            <div class="allergy-item" data-allergy="토마토" onclick="toggleAllergySelection(this)">
+                                <span class="allergy-icon">🍅</span>
+                                <span class="allergy-name">토마토</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 커스텀 알레르기 추가 -->
+                    <div class="custom-allergy">
+                        <h3>기타 알레르기</h3>
+                        <div class="custom-input-group">
+                            <input type="text" id="custom-allergy-input" placeholder="알레르기 성분을 입력하세요" maxlength="20">
+                            <button type="button" onclick="addCustomAllergy()" class="btn-add">추가</button>
+                        </div>
+                        <div id="custom-allergies-list" class="custom-allergies-list"></div>
+                    </div>
+                    
+                    <!-- 선택된 알레르기 표시 -->
+                    <div class="selected-allergies">
+                        <h3>선택된 알레르기</h3>
+                        <div id="selected-allergies-display" class="selected-list"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeAllergySettings()">취소</button>
+                <button type="button" class="btn-save" onclick="saveAllergySettings()">저장</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <span class="logo-icon">🍽️</span>
+                    <span class="logo-text">조심해eat!</span>
+                </div>
+                <p class="footer-text">AI로 안전한 식생활을 시작하세요</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
+
+

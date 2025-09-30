@@ -1,0 +1,55 @@
+# 개인정보 및 보안 파일들
+config/firestore-loader/serviceAccountKey.json
+*.json
+serviceAccountKey.json
+
+# 가상환경
+venv/
+env/
+.env
+
+# Python 캐시
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 업로드된 파일들
+uploads/
+*.jpg
+*.jpeg
+*.png
+*.gif
+
+# 로그 파일들
+logs/
+*.log
+
+# IDE 설정
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS 파일들
+.DS_Store
+Thumbs.db
+
+# 임시 파일들
+*.tmp
+*.temp
+*.bak
+
+# 데이터베이스 백업
+data/backups/
+*.db
+*.sqlite
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# 기타
+*.zip
+*.tar.gz
