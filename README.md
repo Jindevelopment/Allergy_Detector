@@ -8,8 +8,43 @@ AI 기술을 활용하여 식품 성분표를 분석하고 개인별 알레르�
 - 👤 **사용자 인증**: 회원가입, 로그인, 마이페이지
 - ⚠️ **알레르기 관리**: 개인별 알레르기 정보 설정 및 저장
 - 📷 **OCR 분석**: 식품 성분표 이미지 업로드 및 텍스트 추출
+- 📱 **바코드 스캔**: 실시간 바코드 인식 및 제품 정보 조회
 - 🤖 **AI 분석**: 알레르기 성분 감지 및 위험도 평가
 - 📊 **결과 표시**: 신호등 방식의 직관적인 위험도 표시
+
+## 🚀 빠른 시작
+
+### 1. 저장소 클론
+```bash
+git clone https://github.com/Jindevelopment/Allergy_Detector.git
+cd Allergy_Detector
+```
+
+### 2. 가상환경 설정
+```bash
+# 가상환경 생성
+python -m venv venv
+
+# 가상환경 활성화 (macOS/Linux)
+source venv/bin/activate
+
+# 가상환경 활성화 (Windows)
+venv\Scripts\activate
+```
+
+### 3. 패키지 설치
+```bash
+pip install -r requirements.txt
+```
+
+### 4. 애플리케이션 실행
+```bash
+python src/api/flask_app.py
+```
+
+브라우저에서 `http://localhost:3000` 접속
+
+> **참고**: 데모 모드에서는 로그인이 제한되지만 바코드 스캔과 OCR 분석 기능은 모두 사용 가능합니다.
 
 ## 프로젝트 구조
 ```
